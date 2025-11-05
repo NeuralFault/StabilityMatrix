@@ -114,6 +114,7 @@ public partial class CivitDetailsPageViewModel(
     )]
     public partial ModelVersionViewModel? SelectedVersion { get; set; }
 
+
     [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
 
@@ -162,6 +163,14 @@ public partial class CivitDetailsPageViewModel(
     [ObservableProperty]
     public partial bool IsInferenceDefaultsEnabled { get; set; } = false;
 
+    [ObservableProperty]
+    public partial string? PositivePrompt { get; set; }
+
+    [ObservableProperty]
+    public partial string? NegativePrompt { get; set; }
+
+    private bool isLoadingDefaults;
+
     public string LastUpdated =>
         SelectedVersion?.ModelVersion.PublishedAt?.ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
 
@@ -203,6 +212,9 @@ public partial class CivitDetailsPageViewModel(
                 return;
             }
         }
+
+        // Load existing inference defaults for installed models
+        LoadInferenceDefaultsForLocalModel();
 
         AddDisposable(
             settingsManager.RelayPropertyFor(
@@ -804,6 +816,8 @@ public partial class CivitDetailsPageViewModel(
         ModelVersionDescription = string.IsNullOrWhiteSpace(value?.ModelVersion.Description)
             ? string.Empty
             : $"""<html><body class="markdown-body">{value.ModelVersion.Description}</body></html>""";
+        
+        LoadInferenceDefaultsForLocalModel();
     }
 
     public override void OnUnloaded()
@@ -987,5 +1001,230 @@ public partial class CivitDetailsPageViewModel(
         }
 
         return format.GetFileName();
+    }
+
+    private void LoadInferenceDefaultsForLocalModel()
+    {
+        // Check if this model version is installed locally
+        if (SelectedVersion?.IsInstalled != true)
+        {
+            isLoadingDefaults = true;
+            IsInferenceDefaultsEnabled = false;
+            isLoadingDefaults = false;
+            return;
+        }
+
+        // Find the local model file by hash
+        var civitFile = SelectedVersion.ModelVersion.Files?.
+            FirstOrDefault(f => f is { Type: CivitFileType.Model, Hashes.BLAKE3: not null });
+        
+        if (civitFile?.Hashes.BLAKE3 is not { } blake3Hash)
+        {
+            isLoadingDefaults = true;
+            IsInferenceDefaultsEnabled = false;
+            isLoadingDefaults = false;
+            return;
+        }
+
+        var localModel = modelIndexService
+            .ModelIndex.Values
+            .SelectMany(x => x)
+            .FirstOrDefault(m => m.ConnectedModelInfo?.Hashes?.BLAKE3 == blake3Hash);
+
+        if (localModel?.ConnectedModelInfo?.InferenceDefaults is { } defaults)
+        {
+            isLoadingDefaults = true;
+            IsInferenceDefaultsEnabled = true;
+            SamplerCardViewModel.Width = defaults.Width;
+            SamplerCardViewModel.Height = defaults.Height;
+            SamplerCardViewModel.Steps = defaults.Steps;
+            SamplerCardViewModel.CfgScale = defaults.CfgScale;
+            SamplerCardViewModel.SelectedSampler = defaults.Sampler;
+            SamplerCardViewModel.SelectedScheduler = defaults.Scheduler;
+            PositivePrompt = defaults.PositivePrompt;
+            NegativePrompt = defaults.NegativePrompt;
+            isLoadingDefaults = false;
+        }
+        else
+        {
+            isLoadingDefaults = true;
+            IsInferenceDefaultsEnabled = false;
+            isLoadingDefaults = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task EditPositivePrompt()
+    {
+        var promptDocument = new AvaloniaEdit.Document.TextDocument { Text = PositivePrompt ?? string.Empty };
+        
+        var editor = new AvaloniaEdit.TextEditor
+        {
+            Document = promptDocument,
+            FontFamily = new global::Avalonia.Media.FontFamily("Cascadia Code,Consolas,Menlo,Monospace,DejaVu Sans Mono,monospace"),
+            FontSize = 14,
+            ShowLineNumbers = true,
+            WordWrap = true,
+            MinHeight = 300,
+            MinWidth = 600
+        };
+        
+        // Get completion and tokenizer providers from a prompt card VM
+        var promptCardVm = vmFactory.Get<PromptCardViewModel>();
+        
+        // Attach behaviors
+        var completionBehavior = new Behaviors.TextEditorCompletionBehavior
+        {
+            CompletionProvider = promptCardVm.CompletionProvider,
+            TokenizerProvider = promptCardVm.TokenizerProvider,
+            IsEnabled = settingsManager.Settings.IsPromptCompletionEnabled
+        };
+        
+        var weightBehavior = new Behaviors.TextEditorWeightAdjustmentBehavior
+        {
+            TokenizerProvider = promptCardVm.TokenizerProvider
+        };
+        
+        global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(completionBehavior);
+        global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(weightBehavior);
+
+        var border = new Border { Child = editor };
+        border.Classes.Add("theme-dark");
+        
+        var dialog = new ContentDialog
+        {
+            Title = "Edit Positive Prompt",
+            Content = border,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            PositivePrompt = promptDocument.Text;
+            await SaveInferenceDefaultsForLocalModel();
+        }
+    }
+
+    [RelayCommand]
+    private async Task EditNegativePrompt()
+    {
+        var promptDocument = new AvaloniaEdit.Document.TextDocument { Text = NegativePrompt ?? string.Empty };
+        
+        var editor = new AvaloniaEdit.TextEditor
+        {
+            Document = promptDocument,
+            FontFamily = new global::Avalonia.Media.FontFamily("Cascadia Code,Consolas,Menlo,Monospace,DejaVu Sans Mono,monospace"),
+            FontSize = 14,
+            ShowLineNumbers = true,
+            WordWrap = true,
+            MinHeight = 300,
+            MinWidth = 600
+        };
+        
+        // Get completion and tokenizer providers from a prompt card VM
+        var promptCardVm = vmFactory.Get<PromptCardViewModel>();
+        
+        // Attach behaviors
+        var completionBehavior = new Behaviors.TextEditorCompletionBehavior
+        {
+            CompletionProvider = promptCardVm.CompletionProvider,
+            TokenizerProvider = promptCardVm.TokenizerProvider,
+            IsEnabled = settingsManager.Settings.IsPromptCompletionEnabled
+        };
+        
+        var weightBehavior = new Behaviors.TextEditorWeightAdjustmentBehavior
+        {
+            TokenizerProvider = promptCardVm.TokenizerProvider
+        };
+        
+        global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(completionBehavior);
+        global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(weightBehavior);
+
+        var border = new Border { Child = editor };
+        border.Classes.Add("theme-dark");
+        
+        var dialog = new ContentDialog
+        {
+            Title = "Edit Negative Prompt",
+            Content = border,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            NegativePrompt = promptDocument.Text;
+            await SaveInferenceDefaultsForLocalModel();
+        }
+    }
+
+    partial void OnIsInferenceDefaultsEnabledChanged(bool value)
+    {
+        if (!isLoadingDefaults)
+        {
+            SaveInferenceDefaultsForLocalModel().SafeFireAndForget();
+        }
+    }
+
+    private async Task SaveInferenceDefaultsForLocalModel()
+    {
+        // Only save for installed models
+        if (SelectedVersion?.IsInstalled != true)
+            return;
+
+        // Find the local model file by hash
+        var civitFile = SelectedVersion.ModelVersion.Files?.
+            FirstOrDefault(f => f is { Type: CivitFileType.Model, Hashes.BLAKE3: not null });
+        
+        if (civitFile?.Hashes.BLAKE3 is not { } blake3Hash)
+            return;
+
+        var localModel = modelIndexService
+            .ModelIndex.Values
+            .SelectMany(x => x)
+            .FirstOrDefault(m => m.ConnectedModelInfo?.Hashes?.BLAKE3 == blake3Hash);
+
+        if (localModel?.ConnectedModelInfo is not { } connectedModelInfo)
+            return;
+
+        // Update inference defaults
+        connectedModelInfo.InferenceDefaults = IsInferenceDefaultsEnabled
+            ? new InferenceDefaults
+            {
+                Sampler = SamplerCardViewModel.SelectedSampler,
+                Scheduler = SamplerCardViewModel.SelectedScheduler,
+                Width = SamplerCardViewModel.Width,
+                Height = SamplerCardViewModel.Height,
+                CfgScale = SamplerCardViewModel.CfgScale,
+                Steps = SamplerCardViewModel.Steps,
+                PositivePrompt = PositivePrompt,
+                NegativePrompt = NegativePrompt,
+            }
+            : null;
+
+        // Save to file
+        try
+        {
+            var modelFilePath = localModel.GetFullPath(settingsManager.ModelsDirectory);
+            var modelFileName = Path.GetFileNameWithoutExtension(modelFilePath);
+            var modelFolder = Path.GetDirectoryName(modelFilePath) 
+                ?? Path.Combine(settingsManager.ModelsDirectory, localModel.SharedFolderType.ToString());
+
+            await connectedModelInfo.SaveJsonToDirectory(modelFolder, modelFileName);
+            
+            logger.LogInformation(
+                "Saved inference defaults for model {ModelName}",
+                connectedModelInfo.ModelName
+            );
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to save inference defaults for local model");
+        }
     }
 }

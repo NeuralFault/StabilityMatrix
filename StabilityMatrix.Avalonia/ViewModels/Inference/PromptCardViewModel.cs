@@ -167,8 +167,19 @@ public partial class PromptCardViewModel
     {
         if (e.PropertyName == nameof(TabContext.SelectedModel))
         {
-            // Handle selected model change
-            // Could use this to update prompt suggestions based on the model
+            // Apply default prompts from the model's inference defaults
+            if (tabContext.SelectedModel?.Local?.ConnectedModelInfo?.InferenceDefaults is { } defaults)
+            {
+                if (!string.IsNullOrWhiteSpace(defaults.PositivePrompt))
+                {
+                    PromptDocument.Text = defaults.PositivePrompt;
+                }
+                
+                if (!string.IsNullOrWhiteSpace(defaults.NegativePrompt))
+                {
+                    NegativePromptDocument.Text = defaults.NegativePrompt;
+                }
+            }
         }
     }
 

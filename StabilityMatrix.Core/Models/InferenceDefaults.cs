@@ -10,4 +10,6 @@ public record InferenceDefaults
     public double CfgScale { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
+    public string? PositivePrompt { get; set; }
+    public string? NegativePrompt { get; set; }
 }

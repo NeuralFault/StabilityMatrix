@@ -674,7 +674,7 @@
                         <Grid
                             HorizontalAlignment="Stretch"
                             ColumnDefinitions="Auto, *, Auto"
-                            RowDefinitions="Auto, *">
+                            RowDefinitions="Auto, *, Auto">
                             <TextBlock
                                 Margin="8,8,0,0"
                                 FontSize="20"
@@ -704,6 +704,37 @@
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
                                 DataContext="{Binding SamplerCardViewModel}" />
+                            
+                            <!--  Prompts Section  -->
+                            <StackPanel
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="3"
+                                Margin="8,0,8,8"
+                                Orientation="Vertical"
+                                Spacing="8">
+                                <Grid ColumnDefinitions="Auto,*,*">
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,8,0"
+                                        Text="Prompts:" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Margin="0,0,4,0"
+                                        HorizontalAlignment="Stretch"
+                                        Command="{Binding EditPositivePromptCommand}"
+                                        Content="Positive"
+                                        IsEnabled="{Binding IsInferenceDefaultsEnabled}" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Margin="4,0,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        Command="{Binding EditNegativePromptCommand}"
+                                        Content="Negative"
+                                        IsEnabled="{Binding IsInferenceDefaultsEnabled}" />
+                                </Grid>
+                            </StackPanel>
                         </Grid>
                     </controls:Card>
                 </Grid>
