@@ -114,7 +114,6 @@ public partial class CivitDetailsPageViewModel(
     )]
     public partial ModelVersionViewModel? SelectedVersion { get; set; }
 
-
     [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
 
@@ -1017,7 +1016,6 @@ public partial class CivitDetailsPageViewModel(
         // Find the local model file by hash
         var civitFile = SelectedVersion.ModelVersion.Files?.
             FirstOrDefault(f => f is { Type: CivitFileType.Model, Hashes.BLAKE3: not null });
-        
         if (civitFile?.Hashes.BLAKE3 is not { } blake3Hash)
         {
             isLoadingDefaults = true;
@@ -1057,7 +1055,7 @@ public partial class CivitDetailsPageViewModel(
     private async Task EditPositivePrompt()
     {
         var promptDocument = new AvaloniaEdit.Document.TextDocument { Text = PositivePrompt ?? string.Empty };
-        
+
         var editor = new AvaloniaEdit.TextEditor
         {
             Document = promptDocument,
@@ -1068,10 +1066,10 @@ public partial class CivitDetailsPageViewModel(
             MinHeight = 300,
             MinWidth = 600
         };
-        
+
         // Get completion and tokenizer providers from a prompt card VM
         var promptCardVm = vmFactory.Get<PromptCardViewModel>();
-        
+
         // Attach behaviors
         var completionBehavior = new Behaviors.TextEditorCompletionBehavior
         {
@@ -1079,18 +1077,18 @@ public partial class CivitDetailsPageViewModel(
             TokenizerProvider = promptCardVm.TokenizerProvider,
             IsEnabled = settingsManager.Settings.IsPromptCompletionEnabled
         };
-        
+
         var weightBehavior = new Behaviors.TextEditorWeightAdjustmentBehavior
         {
             TokenizerProvider = promptCardVm.TokenizerProvider
         };
-        
+
         global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(completionBehavior);
         global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(weightBehavior);
 
         var border = new Border { Child = editor };
         border.Classes.Add("theme-dark");
-        
+
         var dialog = new ContentDialog
         {
             Title = "Edit Positive Prompt",
@@ -1112,7 +1110,7 @@ public partial class CivitDetailsPageViewModel(
     private async Task EditNegativePrompt()
     {
         var promptDocument = new AvaloniaEdit.Document.TextDocument { Text = NegativePrompt ?? string.Empty };
-        
+
         var editor = new AvaloniaEdit.TextEditor
         {
             Document = promptDocument,
@@ -1123,10 +1121,10 @@ public partial class CivitDetailsPageViewModel(
             MinHeight = 300,
             MinWidth = 600
         };
-        
+
         // Get completion and tokenizer providers from a prompt card VM
         var promptCardVm = vmFactory.Get<PromptCardViewModel>();
-        
+
         // Attach behaviors
         var completionBehavior = new Behaviors.TextEditorCompletionBehavior
         {
@@ -1134,18 +1132,18 @@ public partial class CivitDetailsPageViewModel(
             TokenizerProvider = promptCardVm.TokenizerProvider,
             IsEnabled = settingsManager.Settings.IsPromptCompletionEnabled
         };
-        
+
         var weightBehavior = new Behaviors.TextEditorWeightAdjustmentBehavior
         {
             TokenizerProvider = promptCardVm.TokenizerProvider
         };
-        
+
         global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(completionBehavior);
         global::Avalonia.Xaml.Interactivity.Interaction.GetBehaviors(editor).Add(weightBehavior);
 
         var border = new Border { Child = editor };
         border.Classes.Add("theme-dark");
-        
+
         var dialog = new ContentDialog
         {
             Title = "Edit Negative Prompt",
@@ -1180,7 +1178,6 @@ public partial class CivitDetailsPageViewModel(
         // Find the local model file by hash
         var civitFile = SelectedVersion.ModelVersion.Files?.
             FirstOrDefault(f => f is { Type: CivitFileType.Model, Hashes.BLAKE3: not null });
-        
         if (civitFile?.Hashes.BLAKE3 is not { } blake3Hash)
             return;
 

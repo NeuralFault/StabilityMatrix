@@ -174,7 +174,7 @@ public partial class PromptCardViewModel
                 {
                     PromptDocument.Text = defaults.PositivePrompt;
                 }
-                
+
                 if (!string.IsNullOrWhiteSpace(defaults.NegativePrompt))
                 {
                     NegativePromptDocument.Text = defaults.NegativePrompt;

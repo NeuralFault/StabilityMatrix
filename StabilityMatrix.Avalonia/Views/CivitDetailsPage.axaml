@@ -704,7 +704,7 @@
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
                                 DataContext="{Binding SamplerCardViewModel}" />
-                            
+
                             <!--  Prompts Section  -->
                             <StackPanel
                                 Grid.Row="2"
