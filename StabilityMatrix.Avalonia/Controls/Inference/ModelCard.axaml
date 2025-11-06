@@ -129,7 +129,10 @@
                             Margin="0,8,0,0"
                             HorizontalAlignment="Stretch"
                             Command="{Binding LoadModelDefaultsCommand}"
-                            Content="Load Model Defaults" />
+                            Content="Load Model Defaults"
+                            IsEnabled="{Binding HasModelDefaults}"
+                            ToolTip.ShowOnDisabled="True"
+                            ToolTip.Tip="{Binding LoadModelDefaultsTooltip}" />
 
                         <!--  Refiner  -->
                         <TextBlock

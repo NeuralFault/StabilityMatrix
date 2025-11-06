@@ -30,10 +30,11 @@ public partial class ModelCardViewModel(
 ) : LoadableViewModelBase, IParametersLoadableState, IComfyStep
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasModelDefaults), nameof(LoadModelDefaultsTooltip))]
     private HybridModelFile? selectedModel;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGguf), nameof(ShowPrecisionSelection))]
+    [NotifyPropertyChangedFor(nameof(IsGguf), nameof(ShowPrecisionSelection), nameof(HasModelDefaults), nameof(LoadModelDefaultsTooltip))]
     private HybridModelFile? selectedUnetModel;
 
     [ObservableProperty]
@@ -116,6 +117,18 @@ public partial class ModelCardViewModel(
     public bool IsSd3Clip => SelectedClipType == "sd3";
     public bool IsHiDreamClip => SelectedClipType == "HiDream";
     public bool IsGguf => SelectedUnetModel?.RelativePath.EndsWith("gguf") ?? false;
+
+    public bool HasModelDefaults
+    {
+        get
+        {
+            var model = IsStandaloneModelLoader ? SelectedUnetModel : SelectedModel;
+            return model?.Local?.ConnectedModelInfo?.InferenceDefaults is not null;
+        }
+    }
+
+    public string LoadModelDefaultsTooltip =>
+        HasModelDefaults ? "Load inference defaults set for model" : "No model defaults set";
 
     protected override void OnInitialLoaded()
     {
