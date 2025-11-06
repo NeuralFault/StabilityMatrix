@@ -180,6 +180,10 @@ public partial class SamplerCardViewModel : LoadableViewModelBase, IParametersLo
         if (e.PropertyName != nameof(tabContext.SelectedModel))
             return;
 
+        // Check if this is a manual reload request (triggered by Load Model Defaults button)
+        if (e is not TabContext.ManualReloadEventArgs)
+            return;
+
         if (tabContext.SelectedModel?.Local?.ConnectedModelInfo?.InferenceDefaults is not { } defaults)
             return;
 

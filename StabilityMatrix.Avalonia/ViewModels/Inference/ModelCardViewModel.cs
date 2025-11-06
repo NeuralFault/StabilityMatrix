@@ -15,6 +15,7 @@ using StabilityMatrix.Core.Models;
 using StabilityMatrix.Core.Models.Api.Comfy.Nodes;
 using StabilityMatrix.Core.Models.Api.Comfy.NodeTypes;
 using StabilityMatrix.Core.Models.Inference;
+using StabilityMatrix.Core.Services;
 
 namespace StabilityMatrix.Avalonia.ViewModels.Inference;
 
@@ -24,7 +25,8 @@ namespace StabilityMatrix.Avalonia.ViewModels.Inference;
 public partial class ModelCardViewModel(
     IInferenceClientManager clientManager,
     IServiceManager<ViewModelBase> vmFactory,
-    TabContext tabContext
+    TabContext tabContext,
+    IModelIndexService modelIndexService
 ) : LoadableViewModelBase, IParametersLoadableState, IComfyStep
 {
     [ObservableProperty]
@@ -152,6 +154,18 @@ public partial class ModelCardViewModel(
                 TextEditorPreset.Console
             )
             .ShowAsync();
+    }
+
+    [RelayCommand]
+    private void LoadModelDefaults()
+    {
+        var model = IsStandaloneModelLoader ? SelectedUnetModel : SelectedModel;
+
+        if (model?.Local?.ConnectedModelInfo?.InferenceDefaults is null)
+            return;
+
+        // Trigger a manual reload event to make SamplerCard and PromptCard reload defaults
+        tabContext.TriggerManualReload();
     }
 
     public async Task<bool> ValidateModel()

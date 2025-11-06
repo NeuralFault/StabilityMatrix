@@ -27,8 +27,15 @@ public partial class TabContext : ObservableObject
         StateChanged?.Invoke(this, new TabStateChangedEventArgs(propertyName));
     }
 
+    public void TriggerManualReload()
+    {
+        StateChanged?.Invoke(this, new ManualReloadEventArgs(nameof(SelectedModel)));
+    }
+
     public class TabStateChangedEventArgs(string propertyName) : EventArgs
     {
         public string PropertyName { get; } = propertyName;
     }
+
+    public class ManualReloadEventArgs(string propertyName) : TabStateChangedEventArgs(propertyName);
 }

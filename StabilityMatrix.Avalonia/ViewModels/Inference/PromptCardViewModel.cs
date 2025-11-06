@@ -167,6 +167,10 @@ public partial class PromptCardViewModel
     {
         if (e.PropertyName == nameof(TabContext.SelectedModel))
         {
+            // Check if this is a manual reload request (triggered by Load Model Defaults button)
+            if (e is not TabContext.ManualReloadEventArgs)
+                return;
+
             // Apply default prompts from the model's inference defaults
             if (tabContext.SelectedModel?.Local?.ConnectedModelInfo?.InferenceDefaults is { } defaults)
             {
