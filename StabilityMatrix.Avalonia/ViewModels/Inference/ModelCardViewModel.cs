@@ -30,11 +30,11 @@ public partial class ModelCardViewModel(
 ) : LoadableViewModelBase, IParametersLoadableState, IComfyStep
 {
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasModelDefaults), nameof(LoadModelDefaultsTooltip))]
+    [NotifyPropertyChangedFor(nameof(HasModelDefaults))]
     private HybridModelFile? selectedModel;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGguf), nameof(ShowPrecisionSelection), nameof(HasModelDefaults), nameof(LoadModelDefaultsTooltip))]
+    [NotifyPropertyChangedFor(nameof(IsGguf), nameof(ShowPrecisionSelection), nameof(HasModelDefaults))]
     private HybridModelFile? selectedUnetModel;
 
     [ObservableProperty]
@@ -126,9 +126,6 @@ public partial class ModelCardViewModel(
             return model?.Local?.ConnectedModelInfo?.InferenceDefaults is not null;
         }
     }
-
-    public string LoadModelDefaultsTooltip =>
-        HasModelDefaults ? "Load inference defaults set for model" : "No model defaults set";
 
     protected override void OnInitialLoaded()
     {
