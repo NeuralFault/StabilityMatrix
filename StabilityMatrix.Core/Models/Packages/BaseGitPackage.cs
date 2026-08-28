@@ -6,8 +6,10 @@ using Octokit;
 using StabilityMatrix.Core.Extensions;
 using StabilityMatrix.Core.Helper;
 using StabilityMatrix.Core.Helper.Cache;
+using StabilityMatrix.Core.Helper.HardwareInfo;
 using StabilityMatrix.Core.Models.Database;
 using StabilityMatrix.Core.Models.FileInterfaces;
+using StabilityMatrix.Core.Models.PackageModification;
 using StabilityMatrix.Core.Models.Progress;
 using StabilityMatrix.Core.Models.Rocm;
 using StabilityMatrix.Core.Processes;
@@ -952,6 +954,177 @@ public abstract class BaseGitPackage : BasePackage
     /// Used as a fallback when live discovery fails.
     /// </summary>
     protected virtual IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu130"];
+
+    /// <summary>
+    /// Installs the PyTorch wheel set for the requested channel in the package's venv and persists the
+    /// selection. A Stable channel with a null cudaIndex is a full restore to the package default.
+    /// </summary>
+    public virtual async Task InstallPyTorchChannelAsync(
+        InstalledPackage installedPackage,
+        TorchChannel channel,
+        string? cudaIndex = null
+    )
+    {
+        if (installedPackage.FullPath is null)
+            return;
+
+        var runner = new PackageModificationRunner
+        {
+            ShowDialogOnStart = true,
+            ModificationCompleteMessage = "PyTorch channel updated successfully",
+        };
+        EventManager.Instance.OnPackageInstallProgressAdded(runner);
+
+        await runner
+            .ExecuteSteps(
+                [
+                    new ActionPackageStep(
+                        async progress =>
+                        {
+                            await using var venvRunner = await SetupVenvPure(
+                                    installedPackage.FullPath,
+                                    pythonVersion: PyVersion.Parse(installedPackage.PythonVersion)
+                                )
+                                .ConfigureAwait(false);
+
+                            var torchIndex =
+                                installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
+
+                            var isAmdMultiArch =
+                                channel
+                                    is TorchChannel.AmdStable
+                                        or TorchChannel.AmdNightly
+                                        or TorchChannel.AmdPrerelease;
+
+                            if (isAmdMultiArch)
+                            {
+                                await UninstallConflictingTritonAsync(
+                                        venvRunner,
+                                        installingAmdMultiArch: true
+                                    )
+                                    .ConfigureAwait(false);
+
+                                await InstallAmdMultiArchTorchAsync(
+                                        venvRunner,
+                                        installedPackage,
+                                        channel,
+                                        progress
+                                    )
+                                    .ConfigureAwait(false);
+                                return;
+                            }
+
+                            // Uninstall a leftover AMD repo triton before installing upstream ROCm torch,
+                            // which pulls pytorch-triton-rocm and triton-rocm instead.
+                            if (torchIndex == TorchIndex.Rocm)
+                            {
+                                await UninstallConflictingTritonAsync(
+                                        venvRunner,
+                                        installingAmdMultiArch: false
+                                    )
+                                    .ConfigureAwait(false);
+                            }
+
+                            var (defaultCudaIndex, defaultRocmIndex, defaultXpuIndex) =
+                                GetDefaultTorchIndexVersions();
+
+                            var isLegacyNvidia =
+                                torchIndex == TorchIndex.Cuda
+                                && (
+                                    SettingsManager.Settings.PreferredGpu?.IsLegacyNvidiaGpu()
+                                    ?? HardwareHelper.HasLegacyNvidiaGpu()
+                                );
+
+                            var resolvedCudaIndex =
+                                cudaIndex
+                                ?? installedPackage.TorchCudaIndex
+                                ?? (isLegacyNvidia ? GetSupportedCudaIndexes()[0] : defaultCudaIndex);
+
+                            var rocmIndex = defaultRocmIndex;
+                            if (torchIndex == TorchIndex.Rocm && channel == TorchChannel.Nightly)
+                            {
+                                rocmIndex =
+                                    await PipWheelService
+                                        .GetLatestUpstreamRocmIndexAsync(nightly: true)
+                                        .ConfigureAwait(false) ?? defaultRocmIndex;
+                            }
+
+                            var pipArgs = GetTorchPipArgs(
+                                    torchIndex,
+                                    cudaIndex: resolvedCudaIndex,
+                                    rocmIndex: rocmIndex,
+                                    xpuIndex: defaultXpuIndex,
+                                    channel: channel
+                                )
+                                .AddArg("--force-reinstall");
+
+                            progress.Report(
+                                new ProgressReport(-1f, "Installing PyTorch...", isIndeterminate: true)
+                            );
+
+                            await venvRunner
+                                .PipInstall(pipArgs, progress.AsProcessOutputHandler())
+                                .ConfigureAwait(false);
+                        },
+                        "Installing PyTorch"
+                    ),
+                ]
+            )
+            .ConfigureAwait(false);
+
+        if (runner.Failed)
+            return;
+
+        await using var transaction = SettingsManager.BeginTransaction();
+        var package = transaction.Settings.InstalledPackages.First(x => x.Id == installedPackage.Id);
+        package.TorchChannel = channel;
+        if (channel == TorchChannel.Stable && cudaIndex is null)
+        {
+            package.TorchCudaIndex = null;
+            package.PreferredTorchIndex = null;
+        }
+        else if (cudaIndex is not null)
+        {
+            package.TorchCudaIndex = cudaIndex;
+        }
+    }
+
+    /// <summary>
+    /// Installs torch from the AMD multi-arch repo for an Amd channel. Overridden by ROCm-capable packages.
+    /// </summary>
+    protected virtual Task InstallAmdMultiArchTorchAsync(
+        IPyVenvRunner venvRunner,
+        InstalledPackage installedPackage,
+        TorchChannel channel,
+        IProgress<ProgressReport>? progress = null
+    )
+    {
+        throw new NotSupportedException(
+            $"{DisplayName} does not support installing torch from the AMD multi-arch repo."
+        );
+    }
+
+    /// <summary>
+    /// Uninstalls triton modules that conflict with the torch install direction. Upstream ROCm torch pulls
+    /// pytorch-triton-rocm and triton-rocm; the AMD repo pulls triton.
+    /// </summary>
+    private static async Task UninstallConflictingTritonAsync(
+        IPyVenvRunner venvRunner,
+        bool installingAmdMultiArch
+    )
+    {
+        var conflictingPackages = installingAmdMultiArch
+            ? new[] { "pytorch-triton-rocm", "triton-rocm" }
+            : new[] { "triton" };
+
+        foreach (var packageName in conflictingPackages)
+        {
+            if (await venvRunner.PipShow(packageName).ConfigureAwait(false) is not null)
+            {
+                await venvRunner.PipUninstall(new PipInstallArgs().AddArg(packageName)).ConfigureAwait(false);
+            }
+        }
+    }
 
     /// <summary>
     /// Executes a standardized pip installation workflow: optional pre-install steps, requirements install,
