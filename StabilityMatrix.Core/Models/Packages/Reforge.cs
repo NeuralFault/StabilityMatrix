@@ -45,6 +45,11 @@ public class Reforge(
     public override PackageType PackageType => PackageType.SdInference;
     public override PyVersion RecommendedPythonVersion => Python.PyInstallationManager.Python_3_12_10;
 
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm6.4", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     private const string StableDiffusionRepoOverride =
         "https://github.com/joypaul162/Stability-AI-stablediffusion.git";
 

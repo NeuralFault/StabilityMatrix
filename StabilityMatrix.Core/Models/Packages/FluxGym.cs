@@ -78,6 +78,12 @@ public class FluxGym(
     public override string OutputFolderName => string.Empty;
     public override bool IsCompatible => HardwareHelper.HasNvidiaGpu();
     public override PackageType PackageType => PackageType.SdTraining;
+
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm6.4", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     public override PackageDifficulty InstallerSortOrder => PackageDifficulty.Simple;
 
     public override async Task InstallPackage(

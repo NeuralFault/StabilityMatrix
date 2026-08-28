@@ -43,6 +43,12 @@ public class FramePack(
     public override Uri PreviewImageUri => new("https://cdn.lykos.ai/sm/packages/framepack/framepack.png");
     public override string OutputFolderName => "outputs";
     public override IEnumerable<TorchIndex> AvailableTorchIndices => [TorchIndex.Cuda];
+
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm6.4", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     public override PackageDifficulty InstallerSortOrder => PackageDifficulty.Advanced;
     public override SharedFolderMethod RecommendedSharedFolderMethod => SharedFolderMethod.None;
 

@@ -48,6 +48,12 @@ public class KohyaSs(
     public override bool OfferInOneClickInstaller => false;
     public override SharedFolderMethod RecommendedSharedFolderMethod => SharedFolderMethod.None;
     public override IEnumerable<TorchIndex> AvailableTorchIndices => [TorchIndex.Cuda];
+
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm6.4", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     public override IEnumerable<SharedFolderMethod> AvailableSharedFolderMethods => [SharedFolderMethod.None];
     public override IEnumerable<PackagePrerequisite> Prerequisites =>
         base.Prerequisites.Concat([PackagePrerequisite.Tkinter]);

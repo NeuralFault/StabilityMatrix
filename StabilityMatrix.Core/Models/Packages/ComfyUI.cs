@@ -58,6 +58,9 @@ public class ComfyUI(
     public override SharedFolderMethod RecommendedSharedFolderMethod => SharedFolderMethod.Configuration;
     public override PyVersion RecommendedPythonVersion => Python.PyInstallationManager.Python_3_12_10;
 
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu130", "rocm7.2", "xpu");
+
     // https://github.com/comfyanonymous/ComfyUI/blob/master/folder_paths.py#L11
     public override SharedFolderLayout SharedFolderLayout =>
         new()

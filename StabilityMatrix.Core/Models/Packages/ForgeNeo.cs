@@ -29,6 +29,8 @@ public class ForgeNeo(
     public override string DisplayName { get; set; } = "Stable Diffusion WebUI Forge - Neo";
     public override string MainBranch => "neo";
     public override PackageType PackageType => PackageType.SdInference;
+
+    public override bool SupportsPyTorchChannelSwitch => false;
     public override List<LaunchOptionDefinition> LaunchOptions
     {
         get

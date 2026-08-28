@@ -52,6 +52,8 @@ public class VladAutomatic(
     public override PackageDifficulty InstallerSortOrder => PackageDifficulty.Advanced;
     public override PyVersion RecommendedPythonVersion => Python.PyInstallationManager.Python_3_12_10;
 
+    public override bool SupportsPyTorchChannelSwitch => false;
+
     public override IEnumerable<TorchIndex> AvailableTorchIndices =>
         new[]
         {

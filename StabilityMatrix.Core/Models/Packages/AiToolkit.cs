@@ -58,6 +58,12 @@ public class AiToolkit(
     public override TorchIndex GetRecommendedTorchVersion() => TorchIndex.Cuda;
 
     public override PackageType PackageType => PackageType.SdTraining;
+
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm6.4", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     public override bool OfferInOneClickInstaller => false;
     public override bool ShouldIgnoreReleases => true;
     public override PyVersion RecommendedPythonVersion => Python.PyInstallationManager.Python_3_11_13;

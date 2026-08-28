@@ -936,6 +936,24 @@ public abstract class BaseGitPackage : BasePackage
     }
 
     /// <summary>
+    /// True when the package supports switching its PyTorch channel after install.
+    /// Excludes legacy packages and packages that do not use a venv.
+    /// </summary>
+    public virtual bool SupportsPyTorchChannelSwitch => UsesVenv && PackageType != PackageType.Legacy;
+
+    /// <summary>
+    /// The upstream PyTorch index versions this package installs by default.
+    /// </summary>
+    protected virtual (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu130", "rocm6.4", "xpu");
+
+    /// <summary>
+    /// The CUDA index variants this package can install, legacy GPU variant first.
+    /// Used as a fallback when live discovery fails.
+    /// </summary>
+    protected virtual IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu130"];
+
+    /// <summary>
     /// Executes a standardized pip installation workflow: optional pre-install steps, requirements install,
     /// optional torch install, and final post-install package pins.
     /// </summary>

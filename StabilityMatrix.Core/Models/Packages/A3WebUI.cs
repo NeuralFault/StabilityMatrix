@@ -52,6 +52,11 @@ public class A3WebUI(
     public override SharedFolderMethod RecommendedSharedFolderMethod => SharedFolderMethod.Symlink;
     public override PackageType PackageType => PackageType.SdInference;
 
+    protected override (string CudaIndex, string RocmIndex, string XpuIndex) GetDefaultTorchIndexVersions() =>
+        ("cu128", "rocm7.2", "xpu");
+
+    protected override IReadOnlyList<string> GetSupportedCudaIndexes() => ["cu126", "cu128"];
+
     // From https://github.com/AUTOMATIC1111/stable-diffusion-webui/tree/master/models
     public override Dictionary<SharedFolderType, IReadOnlyList<string>> SharedFolders =>
         new()
