@@ -1035,10 +1035,17 @@ public abstract class BaseGitPackage : BasePackage
                                     ?? HardwareHelper.HasLegacyNvidiaGpu()
                                 );
 
-                            var resolvedCudaIndex =
-                                cudaIndex
-                                ?? installedPackage.TorchCudaIndex
-                                ?? (isLegacyNvidia ? GetSupportedCudaIndexes()[0] : defaultCudaIndex);
+                            var defaultCuda = isLegacyNvidia
+                                ? GetSupportedCudaIndexes()[0]
+                                : defaultCudaIndex;
+
+                            // A Stable restore must fall back to the package default, not the
+                            // previously persisted custom index; a custom switch keeps it.
+                            var isRestore = channel == TorchChannel.Stable && cudaIndex is null;
+
+                            var resolvedCudaIndex = isRestore
+                                ? defaultCuda
+                                : cudaIndex ?? installedPackage.TorchCudaIndex ?? defaultCuda;
 
                             var rocmIndex = defaultRocmIndex;
                             if (torchIndex == TorchIndex.Rocm && channel == TorchChannel.Nightly)
