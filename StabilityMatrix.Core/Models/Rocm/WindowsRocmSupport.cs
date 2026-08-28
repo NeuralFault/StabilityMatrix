@@ -12,6 +12,10 @@ public static class WindowsRocmSupport
     public const string NightlyMultiArchPythonPackageIndexUrl =
         "https://rocm.nightlies.amd.com/whl-multi-arch/";
 
+    public const string WhlNextStableIndexUrl = "https://stable.repo.amd.com/rocm/whl-next/";
+    public const string WhlNextNightlyIndexUrl = "https://nightly.repo.amd.com/rocm/whl-next/";
+    public const string WhlNextPrereleaseIndexUrl = "https://rc.repo.amd.com/rocm/whl-next/";
+
     // Used to exclude modern gfxarches from AOTriton activation EnVar as AOTriton does not currently support them.
     // This is a temporary measure until AOTriton adds support for these architectures.
     private static readonly HashSet<string> AotritonExperimentalExcludedArchitectures =
@@ -96,4 +100,20 @@ public static class WindowsRocmSupport
             ? NightlyMultiArchPythonPackageIndexUrl
             : StableMultiArchPythonPackageIndexUrl;
     }
+
+    /// <summary>
+    /// Resolves the whl-next index URL for a user-selectable Amd torch channel.
+    /// </summary>
+    public static string GetMultiArchIndexUrl(TorchChannel channel) =>
+        channel switch
+        {
+            TorchChannel.AmdStable => WhlNextStableIndexUrl,
+            TorchChannel.AmdNightly => WhlNextNightlyIndexUrl,
+            TorchChannel.AmdPrerelease => WhlNextPrereleaseIndexUrl,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(channel),
+                channel,
+                "Expected an Amd torch channel."
+            ),
+        };
 }
