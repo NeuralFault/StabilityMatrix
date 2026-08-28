@@ -34,6 +34,11 @@ public partial record PipInstallArgs : ProcessArgsBuilder
     public PipInstallArgs WithTorchExtraIndex(string index) =>
         WithExtraIndex($"https://download.pytorch.org/whl/{index}");
 
+    public PipInstallArgs WithTorchNightlyExtraIndex(string index) =>
+        WithExtraIndex($"https://download.pytorch.org/whl/nightly/{index}");
+
+    public PipInstallArgs WithPreRelease() => this.AddArg("--pre");
+
     public PipInstallArgs WithUvTorchExtraIndex(string index) =>
         this.AddKeyedArgs("--index", ["--index", $"pytorch=https://download.pytorch.org/whl/{index}"]);
 

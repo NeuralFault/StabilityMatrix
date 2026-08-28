@@ -60,14 +60,31 @@ public class PipInstallArgsTests
     }
 
     [TestMethod]
+    public void TestGetTorchNightlyWithPreRelease()
+    {
+        // Act
+        var args = new PipInstallArgs()
+            .WithTorch("~=2.0.0.dev")
+            .WithTorchNightlyExtraIndex("cu132")
+            .WithPreRelease()
+            .ToString();
+
+        // Assert
+        Assert.AreEqual(
+            "torch~=2.0.0.dev --extra-index-url https://download.pytorch.org/whl/nightly/cu132 --pre",
+            args
+        );
+    }
+
+    [TestMethod]
     public void TestParsedFromRequirementsTxt()
     {
         // Arrange
         const string requirements = """
-                                    torch~=2.0.0
-                                    torchvision # comment
-                                    --extra-index-url https://example.org
-                                    """;
+            torch~=2.0.0
+            torchvision # comment
+            --extra-index-url https://example.org
+            """;
 
         // Act
         var args = new PipInstallArgs().WithParsedFromRequirementsTxt(requirements);
@@ -85,8 +102,8 @@ public class PipInstallArgsTests
     public void TestParsedFromRequirementsTxt_KeepsEnvironmentMarkerRequirementAsSingleArgument()
     {
         const string requirements = """
-                                    onnxruntime-gpu==1.22.0; python_version < "3.11"
-                                    """;
+            onnxruntime-gpu==1.22.0; python_version < "3.11"
+            """;
 
         var args = new PipInstallArgs().WithParsedFromRequirementsTxt(requirements).ToProcessArgs();
 
@@ -95,10 +112,7 @@ public class PipInstallArgsTests
             "\"onnxruntime-gpu==1.22.0; python_version < \\\"3.11\\\"\"",
             args.Single().GetQuotedValue()
         );
-        Assert.AreEqual(
-            "\"onnxruntime-gpu==1.22.0; python_version < \\\"3.11\\\"\"",
-            args.ToString()
-        );
+        Assert.AreEqual("\"onnxruntime-gpu==1.22.0; python_version < \\\"3.11\\\"\"", args.ToString());
     }
 
     [TestMethod]
@@ -117,13 +131,13 @@ public class PipInstallArgsTests
                 Name = "torch",
                 Constraint = ">=",
                 Version = "2.0.0",
-                Action = PipPackageSpecifierOverrideAction.Update
+                Action = PipPackageSpecifierOverrideAction.Update,
             },
             new()
             {
                 Name = "--extra-index-url https://download.pytorch.org/whl/nightly/cpu",
-                Action = PipPackageSpecifierOverrideAction.Update
-            }
+                Action = PipPackageSpecifierOverrideAction.Update,
+            },
         };
 
         // Act

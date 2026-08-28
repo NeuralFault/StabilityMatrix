@@ -887,7 +887,8 @@ public abstract class BaseGitPackage : BasePackage
         string xformersVersion = "",
         string cudaIndex = "cu130",
         string rocmIndex = "rocm6.4",
-        string xpuIndex = "xpu"
+        string xpuIndex = "xpu",
+        TorchChannel channel = TorchChannel.Stable
     )
     {
         var pipArgs = new PipInstallArgs();
@@ -915,7 +916,16 @@ public abstract class BaseGitPackage : BasePackage
             _ => "cpu",
         };
 
-        pipArgs = pipArgs.WithTorchExtraIndex(extraIndex);
+        // Nightly only applies to upstream PyTorch indices; AMD repo channels are routed
+        // through the ROCm helper, and Zluda/DirectML have no nightly stream.
+        if (channel == TorchChannel.Nightly && torchIndex != TorchIndex.Zluda)
+        {
+            pipArgs = pipArgs.WithTorchNightlyExtraIndex(extraIndex).WithPreRelease();
+        }
+        else
+        {
+            pipArgs = pipArgs.WithTorchExtraIndex(extraIndex);
+        }
 
         if (torchIndex is TorchIndex.Cuda or TorchIndex.Zluda && !string.IsNullOrEmpty(xformersVersion))
         {
