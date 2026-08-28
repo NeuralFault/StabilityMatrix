@@ -46,6 +46,28 @@ public class InstalledPackage : IJsonOnDeserialized
     [Obsolete("Use PreferredTorchIndex instead. (Kept for migration)")]
     public TorchIndex? PreferredTorchVersion { get; set; }
 
+    [JsonConverter(typeof(JsonStringEnumConverter<TorchChannel>))]
+    public TorchChannel TorchChannel { get; set; } = TorchChannel.Stable;
+
+    /// <summary>
+    /// Optional CUDA index variant (e.g. "cu132"). Null uses the package default.
+    /// </summary>
+    public string? TorchCudaIndex { get; set; }
+
+    /// <summary>
+    /// True when the selected channel installs a nightly or prerelease build.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsNightly =>
+        TorchChannel is TorchChannel.Nightly or TorchChannel.AmdNightly or TorchChannel.AmdPrerelease;
+
+    /// <summary>
+    /// True when the selected channel installs from the AMD multi-arch repo.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsAmdMultiArch =>
+        TorchChannel is TorchChannel.AmdStable or TorchChannel.AmdNightly or TorchChannel.AmdPrerelease;
+
     [JsonConverter(typeof(JsonStringEnumConverter<SharedFolderMethod>))]
     public SharedFolderMethod? PreferredSharedFolderMethod { get; set; }
 
@@ -261,7 +283,7 @@ public class InstalledPackage : IJsonOnDeserialized
             Version = new InstalledPackageVersion
             {
                 InstalledReleaseVersion = PackageVersion,
-                IsPrerelease = false
+                IsPrerelease = false,
             };
         }
         else if (!string.IsNullOrWhiteSpace(PackageVersion))
@@ -270,7 +292,7 @@ public class InstalledPackage : IJsonOnDeserialized
             {
                 InstalledBranch = InstalledBranch,
                 InstalledCommitSha = PackageVersion,
-                IsPrerelease = false
+                IsPrerelease = false,
             };
         }
 #pragma warning restore CS0618 // Type or member is obsolete
