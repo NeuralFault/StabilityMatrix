@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Injectio.Attributes;
 using NLog;
 using Octokit;
@@ -17,7 +18,7 @@ namespace StabilityMatrix.Core.Services;
 /// Service for installing pip wheel packages from GitHub releases.
 /// </summary>
 [RegisterSingleton<IPipWheelService, PipWheelService>]
-public class PipWheelService(
+public partial class PipWheelService(
     IGithubApiCache githubApi,
     IDownloadService downloadService,
     IPrerequisiteHelper prerequisiteHelper
@@ -583,6 +584,137 @@ public class PipWheelService(
 
         return null;
     }
+
+    #endregion
+
+    #region Torch discovery
+
+    private const string StableTorchWheelIndexUrl = "https://download.pytorch.org/whl/torch/";
+    private const string NightlyTorchWheelIndexUrl = "https://download.pytorch.org/whl/nightly/torch/";
+    private static readonly TimeSpan DiscoveryCacheTtl = TimeSpan.FromHours(24);
+
+    private readonly ConcurrentDictionary<bool, (DateTimeOffset Expiry, string Text)> _torchListingCache =
+        new();
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetAvailableCudaIndexesAsync(
+        bool nightly = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var listing = await GetTorchWheelListingAsync(nightly, cancellationToken).ConfigureAwait(false);
+        if (listing is null)
+            return [];
+
+        return nightly ? ParseNightlyCudaIndexes(listing) : ParseStableCudaIndexes(listing);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetLatestUpstreamRocmIndexAsync(
+        bool nightly = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var listing = await GetTorchWheelListingAsync(nightly, cancellationToken).ConfigureAwait(false);
+        return listing is null ? null : ParseLatestRocmIndex(listing);
+    }
+
+    /// <summary>
+    /// Fetches and caches the raw torch wheel index listing for a channel.
+    /// </summary>
+    private async Task<string?> GetTorchWheelListingAsync(bool nightly, CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (_torchListingCache.TryGetValue(nightly, out var cached) && cached.Expiry > now)
+        {
+            return cached.Text;
+        }
+
+        var url = nightly ? NightlyTorchWheelIndexUrl : StableTorchWheelIndexUrl;
+        try
+        {
+            await using var stream = await downloadService
+                .GetContentAsync(url, cancellationToken)
+                .ConfigureAwait(false);
+            using var reader = new StreamReader(stream);
+            var text = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            _torchListingCache[nightly] = (now.Add(DiscoveryCacheTtl), text);
+            return text;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Failed to fetch torch wheel listing from {Url}", url);
+            return null;
+        }
+    }
+
+    private static IReadOnlyList<string> ParseStableCudaIndexes(string listing)
+    {
+        var maxVersion = new Version(0, 0);
+        var latestCuda = new HashSet<int>();
+
+        foreach (Match match in StableCudaRegex().Matches(listing))
+        {
+            if (!Version.TryParse(match.Groups[1].Value, out var version))
+                continue;
+
+            var cuda = int.Parse(match.Groups[2].Value);
+
+            if (version > maxVersion)
+            {
+                maxVersion = version;
+                latestCuda.Clear();
+                latestCuda.Add(cuda);
+            }
+            else if (version == maxVersion)
+            {
+                latestCuda.Add(cuda);
+            }
+        }
+
+        return latestCuda.OrderByDescending(x => x).Select(x => $"cu{x}").ToList();
+    }
+
+    private static IReadOnlyList<string> ParseNightlyCudaIndexes(string listing)
+    {
+        return NightlyCudaRegex()
+            .Matches(listing)
+            .Select(match => int.Parse(match.Groups[1].Value))
+            .Distinct()
+            .OrderByDescending(x => x)
+            .Select(x => $"cu{x}")
+            .ToList();
+    }
+
+    private static string? ParseLatestRocmIndex(string listing)
+    {
+        var versions = RocmRegex()
+            .Matches(listing)
+            .Select(match => match.Groups[1].Value)
+            .Select(value => Version.TryParse(value, out var version) ? version : null)
+            .Where(version => version is not null)
+            .Cast<Version>()
+            .ToList();
+
+        if (versions.Count == 0)
+            return null;
+
+        var latest = versions.Max();
+        return $"rocm{latest.Major}.{latest.Minor}";
+    }
+
+    [GeneratedRegex(@"torch-(\d+\.\d+\.\d+)%2Bcu(\d+)")]
+    private static partial Regex StableCudaRegex();
+
+    [GeneratedRegex(@"%2Bcu(\d+)")]
+    private static partial Regex NightlyCudaRegex();
+
+    [GeneratedRegex(@"%2Brocm(\d+\.\d+)")]
+    private static partial Regex RocmRegex();
 
     #endregion
 }

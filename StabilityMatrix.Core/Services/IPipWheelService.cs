@@ -52,4 +52,21 @@ public interface IPipWheelService
         IProgress<ProgressReport>? progress = null,
         string? version = null
     );
+
+    /// <summary>
+    /// Returns the available upstream PyTorch CUDA index variants, highest CUDA version first.
+    /// Returns an empty list when discovery fails.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetAvailableCudaIndexesAsync(
+        bool nightly = false,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Returns the latest upstream PyTorch ROCm index variant, or null when discovery fails.
+    /// </summary>
+    Task<string?> GetLatestUpstreamRocmIndexAsync(
+        bool nightly = false,
+        CancellationToken cancellationToken = default
+    );
 }
