@@ -71,7 +71,7 @@ public static partial class HardwareHelper
     [SupportedOSPlatform("linux")]
     private static IEnumerable<GpuInfo> IterGpuInfoLinux()
     {
-        var output = RunBashCommand("lspci | grep -E '(VGA|3D|Display controller)'");
+        var output = RunBashCommand("lspci -nn | grep -E '(VGA|3D|Display controller)'");
         var gpuLines = output.Split("\n");
 
         var gpuIndex = 0;
@@ -86,6 +86,8 @@ public static partial class HardwareHelper
 
             ulong memoryBytes = 0;
             string? name = null;
+            string? vendorId = null;
+            string? deviceId = null;
 
             // Parse output with regex
             var match = Regex.Match(
@@ -97,10 +99,21 @@ public static partial class HardwareHelper
                 name = match.Groups[2].Value.Trim();
             }
 
-            match = Regex.Match(gpuOutput, @"prefetchable\) \[size=(\\d+)M\]");
-            if (match.Success)
+            // The framebuffer BAR is the largest prefetchable region; match both M and G suffixes.
+            memoryBytes = Regex
+                .Matches(gpuOutput, @"prefetchable\) \[size=(\d+)([MG])\]")
+                .Select(m =>
+                    ulong.Parse(m.Groups[1].Value) * (m.Groups[2].Value == "G" ? Size.GiB : Size.MiB)
+                )
+                .DefaultIfEmpty(0UL)
+                .Max();
+
+            // Parse vendor/device IDs from the discovery line, e.g. "[1002:744c]".
+            var pciIdMatch = Regex.Match(line, @"\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]");
+            if (pciIdMatch.Success)
             {
-                memoryBytes = ulong.Parse(match.Groups[1].Value) * 1024 * 1024;
+                vendorId = pciIdMatch.Groups[1].Value.ToLowerInvariant();
+                deviceId = pciIdMatch.Groups[2].Value.ToLowerInvariant();
             }
 
             yield return new GpuInfo
@@ -108,6 +121,8 @@ public static partial class HardwareHelper
                 Index = gpuIndex++,
                 Name = name,
                 MemoryBytes = memoryBytes,
+                VendorId = vendorId,
+                DeviceId = deviceId,
             };
         }
     }
