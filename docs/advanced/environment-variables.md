@@ -141,9 +141,9 @@ Most users should leave these alone unless they are troubleshooting a specific R
 | `MIOPEN_CHECK_NUMERICS` | `0x02` or `0x04` | Checks tensors for NaNs, infinities, and related numerical problems. This is useful when a ROCm workflow produces corrupted outputs or starts failing only on certain models or resolutions. |
 | `MIOPEN_GEMM_ENFORCE_BACKEND` | `5` | Overrides MIOpen's GEMM backend selection. This is an advanced tuning variable that can be useful when comparing rocBLAS and hipBLASLt behavior or isolating backend-specific regressions. |
 | `COMFYUI_ENABLE_MIOPEN` | `1` | Tells ComfyUI to keep the MIOpen-backed path enabled on ROCm builds where it may otherwise be disabled by default. Without this enabled, ComfyUI disables the `cudnn` backend path in its backend calls for RDNA3, RDNA3.5, and RDNA4 AMD GPUs, which in turn disables the MIOpen-backed functions that rely on that path. This variable is needed for MIOpen to function properly in those setups. |
-| `TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL` | `1` | Enables the experimental ROCm AOTriton path in compatible PyTorch builds. In Stability Matrix's Windows ROCm ComfyUI integration, this is used for TheRock technical-preview PyTorch builds to enable AOTriton-provided built-in Flash Attention and PyTorch SDPA memory-efficient attention paths. |
+| `TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL` | `1` | Enables the experimental ROCm AOTriton path in compatible PyTorch builds. In Stability Matrix's ROCm ComfyUI integration, this is used for AMD PyTorch builds to enable AOTriton-provided built-in Flash Attention and PyTorch SDPA memory-efficient attention paths. |
 
-For Windows ROCm-based WebUI package launches, Stability Matrix already applies several of these optimizations automatically at package launch as a general all-round baseline. Variables automatically utilized at package launch include:
+For ROCm-based WebUI package launches, Stability Matrix already applies several of these optimizations automatically at package launch as a general all-round baseline. Variables automatically utilized at package launch include:
 
 | Variable | Value | Notes |
 |---|---|---|
@@ -155,16 +155,13 @@ For Windows ROCm-based WebUI package launches, Stability Matrix already applies 
 | `COMFYUI_ENABLE_MIOPEN` | `1` | Keeps the MIOpen-backed path enabled in ComfyUI on RDNA3 / RDNA3.5 / RDNA4 GPUs. |
 | `PYTORCH_ALLOC_CONF` | `max_split_size_mb:512,garbage_collection_threshold:0.8` | |
 
-Environment Variables automatically enabled for legacy AMD GPU architectures (Vega/GCN5, RDNA1, RDNA2) where certain backend paths are not supported by the hardware or supported well:
+Environment Variables automatically enabled for legacy AMD GPU architectures (Vega/GCN5, CDNA1, RDNA1, RDNA2) where certain backend paths are not supported by the hardware or supported well:
 | Variable | Value | Notes |
 |---|---|---|
 | `TORCH_BACKENDS_CUDA_FLASH_SDP_ENABLED` | `0` | Disables the Flash SDP backend. |
 | `TORCH_BACKENDS_CUDA_MEM_EFF_SDP_ENABLED` | `0` | Disables the memory-efficient SDP backend. |
 | `TORCH_BACKENDS_CUDA_MATH_SDP_ENABLED` | `1` | Enables the math SDP backend as the fallback attention implementation. |
 
-
-> [!NOTE]
-> Linux installs do not currently get the same automatic overrides, so they will need to be enabled by the user.
 
 > [!NOTE]
 > ComfyUI-Zluda is not managed by Stability Matrix's internal ROCm handling. If you're using the ComfyUI-Zluda package specifically, it also sets its own environment variables at launch similar to some of the above: `FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE`, `MIOPEN_FIND_MODE=2`, `MIOPEN_LOG_LEVEL=3`, and `ZLUDA_COMGR_LOG_LEVEL=1`. If you're wondering why those already appear to be set for a ZLUDA install, this is why.
