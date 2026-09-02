@@ -14,7 +14,7 @@ public class OneTrainerWindowsRocmProfile : RocmPackageProfile
     // Restores flop counter functionality requiring triton module
     private const string TritonWindowsPackage = "triton-windows";
 
-    // Replace upstream bitsandbytes with ROCm-aware bitsandbytes for ROCm Technical Preview on Windows
+    // Replace upstream bitsandbytes with broader ROCm support for Windows. keep pinned to 0.49.1 build until upstream supports 0.50.0+
     private const string BitsAndBytesWheelUrl =
         "https://github.com/0xDELUXA/bitsandbytes_win_rocm/releases/download/0.49.1-py3.12-rocm7.16-win_amd64_all/bitsandbytes-0.49.1-cp312-cp312-win_amd64.whl";
 

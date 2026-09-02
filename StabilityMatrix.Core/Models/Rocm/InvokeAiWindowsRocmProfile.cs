@@ -13,9 +13,9 @@ public class InvokeAiWindowsRocmProfile : RocmPackageProfile
     //Restores flop counter functionality requiring triton module
     private const string TritonWindowsPackage = "triton-windows";
 
-    // Replace upstream bitsandbytes with ROCm-aware bitsandbytes for TheRock ROCm 7.13 on Windows
+    // Replace upstream bitsandbytes with broader ROCm support for Windows
     private const string BitsAndBytesWheelUrl =
-        "https://github.com/0xDELUXA/bitsandbytes_win_rocm/releases/download/0.50.0.dev0-py3.12-rocm7.15-win_amd64_all/bitsandbytes-0.50.0.dev0-cp312-cp312-win_amd64.whl";
+        "https://github.com/0xDELUXA/bitsandbytes_win_rocm/releases/download/0.50.2.dev0-py3.12-rocm7.16-win_amd64_all/bitsandbytes-0.50.2.dev0-cp312-cp312-win_amd64.whl";
 
     public static RocmPackageProfile CreateInstallProfile(PyVersion pyVersion)
     {
