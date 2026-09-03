@@ -11,7 +11,7 @@ namespace StabilityMatrix.Core.Models.Rocm;
 public class RocmPackageProfile
 {
     /// <summary>
-    /// Standard package install configuration used before the helper-managed Windows ROCm torch step.
+    /// Standard package install configuration used before the helper-managed ROCm torch step.
     /// </summary>
     public PipInstallConfig InstallConfig { get; init; } = new();
 

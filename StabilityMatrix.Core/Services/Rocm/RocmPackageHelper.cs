@@ -126,7 +126,7 @@ public class RocmPackageHelper : IRocmPackageHelper
     /// Ensures <c>rocm-sdk-devel</c> is installed from the ROCm multi-arch index.
     /// It prefers a build whose date token matches the installed ROCm torch build and falls back to the latest available build when no exact match is available.
     /// </summary>
-    public async Task EnsureWindowsSdkDevelAsync(
+    public async Task EnsureRocmSdkDevelAsync(
         IPyVenvRunner venvRunner,
         IProgress<ProgressReport>? progress = null,
         Action<ProcessOutput>? onConsoleOutput = null,
@@ -142,14 +142,14 @@ public class RocmPackageHelper : IRocmPackageHelper
         if (torchInfo is null)
         {
             throw new InvalidOperationException(
-                "torch is not installed in this environment. Install the Windows ROCm torch build first."
+                "torch is not installed in this environment. Install the ROCm torch build first."
             );
         }
 
-        if (!IsUsableWindowsNativeTorchBuild(torchInfo.Version, null))
+        if (!IsUsableRocmNativeTorchBuild(torchInfo.Version, null))
         {
             throw new InvalidOperationException(
-                $"Installed torch is not a usable Windows ROCm build (detected version: {torchInfo.Version})."
+                $"Installed torch is not a usable ROCm build (detected version: {torchInfo.Version})."
             );
         }
 
@@ -187,7 +187,7 @@ public class RocmPackageHelper : IRocmPackageHelper
             progress?.Report(
                 new ProgressReport(
                     -1f,
-                    $"Installing {RocmSdkDevelPackageName} {matchingVersion} for Windows ROCm...",
+                    $"Installing {RocmSdkDevelPackageName} {matchingVersion} for ROCm...",
                     isIndeterminate: true
                 )
             );
@@ -197,7 +197,7 @@ public class RocmPackageHelper : IRocmPackageHelper
             progress?.Report(
                 new ProgressReport(
                     -1f,
-                    $"Falling back to latest available {RocmSdkDevelPackageName} build {versionToInstall} for Windows ROCm...",
+                    $"Falling back to latest available {RocmSdkDevelPackageName} build {versionToInstall} for ROCm...",
                     isIndeterminate: true
                 )
             );
@@ -215,9 +215,9 @@ public class RocmPackageHelper : IRocmPackageHelper
     }
 
     /// <summary>
-    /// Builds the standard pip install config for helper-managed Windows ROCm package installs.
+    /// Builds the standard pip install config for helper-managed ROCm package installs.
     /// </summary>
-    public PipInstallConfig BuildWindowsNativeInstallConfig(RocmPackageProfile profile)
+    public PipInstallConfig BuildRocmNativeInstallConfig(RocmPackageProfile profile)
     {
         return profile.InstallConfig with { SkipTorchInstall = true };
     }
@@ -225,7 +225,7 @@ public class RocmPackageHelper : IRocmPackageHelper
     /// <summary>
     /// Installs the ROCm torch wheel set from the multi-arch index and verifies that the resulting torch installation reports usable ROCm metadata.
     /// </summary>
-    public async Task InstallWindowsNativeTorchAsync(
+    public async Task InstallRocmNativeTorchAsync(
         IPyVenvRunner venvRunner,
         InstalledPackage installedPackage,
         RocmPackageProfile profile,
@@ -238,7 +238,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         if (!state.IsCompatible)
         {
             throw new InvalidOperationException(
-                state.FailureReason ?? "Windows ROCm installation is not supported for the current machine."
+                state.FailureReason ?? "ROCm installation is not supported for the current machine."
             );
         }
 
@@ -247,7 +247,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         if (string.IsNullOrWhiteSpace(multiArchDeviceExtra))
         {
             throw new InvalidOperationException(
-                $"No Windows ROCm multi-arch device extra is available for '{state.RuntimeGfxArch ?? "unknown"}'."
+                $"No ROCm multi-arch device extra is available for '{state.RuntimeGfxArch ?? "unknown"}'."
             );
         }
 
@@ -296,7 +296,7 @@ public class RocmPackageHelper : IRocmPackageHelper
             await venvRunner.PipInstall(postTorchInstallPipArgs, onConsoleOutput).ConfigureAwait(false);
         }
 
-        await VerifyWindowsNativeTorchInstallAsync(venvRunner, onConsoleOutput, cancellationToken)
+        await VerifyRocmNativeTorchInstallAsync(venvRunner, onConsoleOutput, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -419,7 +419,7 @@ public class RocmPackageHelper : IRocmPackageHelper
     /// <summary>
     /// Verifies that the installed torch build still reports usable ROCm metadata after helper-managed installs complete.
     /// </summary>
-    private static async Task VerifyWindowsNativeTorchInstallAsync(
+    private static async Task VerifyRocmNativeTorchInstallAsync(
         IPyVenvRunner venvRunner,
         Action<ProcessOutput>? onConsoleOutput,
         CancellationToken cancellationToken
@@ -430,7 +430,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         var torchInfo = await venvRunner.PipShow("torch").ConfigureAwait(false);
         if (torchInfo is null)
         {
-            throw new InvalidOperationException("torch was not installed after Windows ROCm setup.");
+            throw new InvalidOperationException("torch was not installed after ROCm setup.");
         }
 
         var verificationResult = await venvRunner
@@ -475,7 +475,7 @@ public class RocmPackageHelper : IRocmPackageHelper
             var hipVersion = root.TryGetProperty("hip", out var hipElement) ? hipElement.GetString() : null;
             var cudaAvailable = root.TryGetProperty("cuda", out var cudaElement) && cudaElement.GetBoolean();
 
-            if (!IsUsableWindowsNativeTorchBuild(version, hipVersion))
+            if (!IsUsableRocmNativeTorchBuild(version, hipVersion))
             {
                 throw new InvalidOperationException(
                     $"Installed torch is not a usable ROCm build. Verification output: {verificationOutput}"
@@ -499,7 +499,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         }
     }
 
-    internal static bool IsUsableWindowsNativeTorchBuild(string? version, string? hipVersion)
+    internal static bool IsUsableRocmNativeTorchBuild(string? version, string? hipVersion)
     {
         if (!string.IsNullOrWhiteSpace(hipVersion))
             return true;

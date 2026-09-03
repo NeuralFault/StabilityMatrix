@@ -56,9 +56,9 @@ public class Reforge(
             var baseLaunchOptions = new List<LaunchOptionDefinition>(base.LaunchOptions);
             var extrasIndex = baseLaunchOptions.FindIndex(x => x.Name == LaunchOptionDefinition.Extras.Name);
 
-            // Adjust inherited launch defaults for the Windows ROCm path before inserting reForge-specific options.
+            // Adjust inherited launch defaults for the ROCm path before inserting reForge-specific options.
             // Makes the reForge-specific attention options visible in the UI and leaves them unset by default
-            // for non-Windows-ROCm installs so reForge can keep using its normal internal attention selection.
+            // for non-ROCm installs so reForge can keep using its normal internal attention selection.
             ReforgeRocmProfile.Default.ApplyRocmLaunchDefaults(baseLaunchOptions, rocmPackageHelper);
 
             baseLaunchOptions.Insert(
@@ -78,7 +78,7 @@ public class Reforge(
         }
     }
 
-    // Prefer ROCm on Linux AMD systems and use the helper-managed Windows ROCm install/launch flow when supported.
+    // Prefer ROCm on Linux AMD systems and use the helper-managed ROCm install/launch flow when supported.
     public override TorchIndex GetRecommendedTorchVersion()
     {
         var preferRocm =
@@ -126,7 +126,7 @@ public class Reforge(
             .ConfigureAwait(false);
 
         var profile = ReforgeRocmProfile.CreateProfile(GetRequirementsPaths(installLocation));
-        var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(profile);
+        var config = rocmPackageHelper.BuildRocmNativeInstallConfig(profile);
 
         await StandardPipInstallProcessAsync(
                 venvRunner,
@@ -140,7 +140,7 @@ public class Reforge(
             .ConfigureAwait(false);
 
         await rocmPackageHelper
-            .InstallWindowsNativeTorchAsync(
+            .InstallRocmNativeTorchAsync(
                 venvRunner,
                 installedPackage,
                 profile,

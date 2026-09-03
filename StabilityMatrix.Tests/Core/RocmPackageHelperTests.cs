@@ -34,9 +34,9 @@ public class RocmPackageHelperTests
     }
 
     [TestMethod]
-    public void IsUsableWindowsNativeTorchBuild_ReturnsTrue_WhenHipMetadataExists()
+    public void IsUsableRocmNativeTorchBuild_ReturnsTrue_WhenHipMetadataExists()
     {
-        var isUsable = RocmPackageHelper.IsUsableWindowsNativeTorchBuild(
+        var isUsable = RocmPackageHelper.IsUsableRocmNativeTorchBuild(
             version: "test-version",
             hipVersion: "test-hip-version"
         );
@@ -45,9 +45,9 @@ public class RocmPackageHelperTests
     }
 
     [TestMethod]
-    public void IsUsableWindowsNativeTorchBuild_ReturnsTrue_WhenVersionContainsRocm()
+    public void IsUsableRocmNativeTorchBuild_ReturnsTrue_WhenVersionContainsRocm()
     {
-        var isUsable = RocmPackageHelper.IsUsableWindowsNativeTorchBuild(
+        var isUsable = RocmPackageHelper.IsUsableRocmNativeTorchBuild(
             version: "test-version+rocm",
             hipVersion: null
         );
@@ -56,9 +56,9 @@ public class RocmPackageHelperTests
     }
 
     [TestMethod]
-    public void IsUsableWindowsNativeTorchBuild_ReturnsFalse_WhenNoRocmMetadataExists()
+    public void IsUsableRocmNativeTorchBuild_ReturnsFalse_WhenNoRocmMetadataExists()
     {
-        var isUsable = RocmPackageHelper.IsUsableWindowsNativeTorchBuild(
+        var isUsable = RocmPackageHelper.IsUsableRocmNativeTorchBuild(
             version: "test-version",
             hipVersion: null
         );

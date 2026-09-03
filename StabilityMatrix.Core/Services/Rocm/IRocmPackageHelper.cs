@@ -34,10 +34,10 @@ public interface IRocmPackageHelper
     bool ShouldApplyRocmLaunchEnvironment(TorchIndex selectedTorchIndex);
 
     /// <summary>
-    /// Ensures a usable Windows ROCm SDK devel package is installed from the ROCm multi-arch index,
+    /// Ensures a usable ROCm SDK devel package is installed from the ROCm multi-arch index,
     /// preferring the same build date token as the installed torch build and falling back to the latest available build.
     /// </summary>
-    Task EnsureWindowsSdkDevelAsync(
+    Task EnsureRocmSdkDevelAsync(
         IPyVenvRunner venvRunner,
         IProgress<ProgressReport>? progress = null,
         Action<ProcessOutput>? onConsoleOutput = null,
@@ -45,14 +45,14 @@ public interface IRocmPackageHelper
     );
 
     /// <summary>
-    /// Builds the standard pip install config for a Windows ROCm package, ensuring torch installation stays helper-managed.
+    /// Builds the standard pip install config for a ROCm package, ensuring torch installation stays helper-managed.
     /// </summary>
-    PipInstallConfig BuildWindowsNativeInstallConfig(RocmPackageProfile profile);
+    PipInstallConfig BuildRocmNativeInstallConfig(RocmPackageProfile profile);
 
     /// <summary>
-    /// Installs the Windows-native ROCm torch wheel set for a package using helper-resolved multi-arch device extras.
+    /// Installs the ROCm torch wheel set for a package using helper-resolved multi-arch device extras.
     /// </summary>
-    Task InstallWindowsNativeTorchAsync(
+    Task InstallRocmNativeTorchAsync(
         IPyVenvRunner venvRunner,
         InstalledPackage installedPackage,
         RocmPackageProfile profile,

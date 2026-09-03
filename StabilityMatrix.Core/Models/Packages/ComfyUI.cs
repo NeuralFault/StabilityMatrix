@@ -415,7 +415,7 @@ public class ComfyUI(
                 new ExtraPackageCommand
                 {
                     CommandName = "Install Triton and SageAttention (ROCm)",
-                    Command = InstallWindowsRocmSageAttention,
+                    Command = InstallRocmSageAttention,
                 }
             );
 
@@ -423,7 +423,7 @@ public class ComfyUI(
                 new ExtraPackageCommand
                 {
                     CommandName = "Install Flash Attention (ROCm)",
-                    Command = InstallWindowsRocmFlashAttention,
+                    Command = InstallRocmFlashAttention,
                     IsVisible = _ => RocmSupport.IsLegacyArchitecture(GetRocmCompatibility().ResolvedGfxArch),
                 }
             );
@@ -432,7 +432,7 @@ public class ComfyUI(
                 new ExtraPackageCommand
                 {
                     CommandName = "Install ROCm Development SDK",
-                    Command = InstallWindowsRocmDevelopmentSdk,
+                    Command = InstallRocmDevelopmentSdk,
                 }
             );
 
@@ -440,7 +440,7 @@ public class ComfyUI(
                 new ExtraPackageCommand
                 {
                     CommandName = "Install bitsandbytes (ROCm)",
-                    Command = InstallWindowsRocmBitsAndBytes,
+                    Command = InstallRocmBitsAndBytes,
                     IsVisible = installedPackage =>
                     {
                         if (!PyVersion.TryParse(installedPackage.PythonVersion, out var pyVersion))
@@ -488,7 +488,7 @@ public class ComfyUI(
 
         if (Compat.IsWindows && torchIndex == TorchIndex.Rocm && HasRocmSupport())
         {
-            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(ComfyRocmProfile.Default);
+            var config = rocmPackageHelper.BuildRocmNativeInstallConfig(ComfyRocmProfile.Default);
 
             await StandardPipInstallProcessAsync(
                     venvRunner,
@@ -502,7 +502,7 @@ public class ComfyUI(
                 .ConfigureAwait(false);
 
             await rocmPackageHelper
-                .InstallWindowsNativeTorchAsync(
+                .InstallRocmNativeTorchAsync(
                     venvRunner,
                     installedPackage,
                     ComfyRocmProfile.Default,
@@ -742,7 +742,7 @@ public class ComfyUI(
         return GetRocmCompatibility(rocmPackageHelper);
     }
 
-    /// Defaults legacy Windows ROCm GPUs to quad cross-attention because PyTorch cross-attention is considerably slower
+    /// Defaults legacy ROCm GPUs to quad cross-attention because PyTorch cross-attention is considerably slower
     /// and not as supported on older AMD architectures.
     private bool DefaultToQuadCrossAttention()
     {
@@ -1048,12 +1048,12 @@ public class ComfyUI(
         await EnableSageAttentionAsync(installedPackage).ConfigureAwait(false);
     }
 
-    private async Task InstallWindowsRocmSageAttention(InstalledPackage? installedPackage)
+    private async Task InstallRocmSageAttention(InstalledPackage? installedPackage)
     {
-        var succeeded = await RunWindowsRocmPackageCommandAsync(
+        var succeeded = await RunRocmPackageCommandAsync(
                 installedPackage,
-                WindowsRocmPackageCommandType.SageAttention,
-                "Windows ROCm SageAttention installed successfully",
+                RocmPackageCommandType.SageAttention,
+                "ROCm SageAttention installed successfully",
                 includeEnvironmentVariables: true
             )
             .ConfigureAwait(false);
@@ -1064,42 +1064,42 @@ public class ComfyUI(
         await EnableSageAttentionAsync(installedPackage).ConfigureAwait(false);
     }
 
-    private async Task InstallWindowsRocmDevelopmentSdk(InstalledPackage? installedPackage)
+    private async Task InstallRocmDevelopmentSdk(InstalledPackage? installedPackage)
     {
-        await RunWindowsRocmPackageCommandAsync(
+        await RunRocmPackageCommandAsync(
                 installedPackage,
-                WindowsRocmPackageCommandType.DevelopmentSdk,
-                "Windows ROCm Development SDK installed successfully",
+                RocmPackageCommandType.DevelopmentSdk,
+                "ROCm Development SDK installed successfully",
                 includeEnvironmentVariables: false
             )
             .ConfigureAwait(false);
     }
 
-    private async Task InstallWindowsRocmBitsAndBytes(InstalledPackage? installedPackage)
+    private async Task InstallRocmBitsAndBytes(InstalledPackage? installedPackage)
     {
-        await RunWindowsRocmPackageCommandAsync(
+        await RunRocmPackageCommandAsync(
                 installedPackage,
-                WindowsRocmPackageCommandType.BitsAndBytes,
-                "Windows ROCm bitsandbytes installed successfully",
+                RocmPackageCommandType.BitsAndBytes,
+                "ROCm bitsandbytes installed successfully",
                 includeEnvironmentVariables: true
             )
             .ConfigureAwait(false);
     }
 
-    private async Task InstallWindowsRocmFlashAttention(InstalledPackage? installedPackage)
+    private async Task InstallRocmFlashAttention(InstalledPackage? installedPackage)
     {
-        await RunWindowsRocmPackageCommandAsync(
+        await RunRocmPackageCommandAsync(
                 installedPackage,
-                WindowsRocmPackageCommandType.FlashAttention,
-                "Windows ROCm Flash Attention installed successfully",
+                RocmPackageCommandType.FlashAttention,
+                "ROCm Flash Attention installed successfully",
                 includeEnvironmentVariables: true
             )
             .ConfigureAwait(false);
     }
 
-    private async Task<bool> RunWindowsRocmPackageCommandAsync(
+    private async Task<bool> RunRocmPackageCommandAsync(
         InstalledPackage? installedPackage,
-        WindowsRocmPackageCommandType commandType,
+        RocmPackageCommandType commandType,
         string completionMessage,
         bool includeEnvironmentVariables
     )
@@ -1126,7 +1126,7 @@ public class ComfyUI(
         await runner
             .ExecuteSteps(
                 [
-                    new InstallWindowsRocmPackageCommandStep(
+                    new InstallRocmPackageCommandStep(
                         downloadService,
                         pyInstallationManager,
                         prerequisiteHelper,

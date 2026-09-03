@@ -41,7 +41,7 @@ public class RocmEnvironmentOptions
     public string? FlashAttentionTritonAmdEnable { get; init; } = "TRUE";
 
     /// <summary>
-    /// When true, helper-managed defaults will enable ROCm AOTriton on modern Windows ROCm architectures.
+    /// When true, helper-managed defaults will enable ROCm AOTriton on modern ROCm architectures.
     /// </summary>
     public bool ApplyAotritonExperimental { get; init; } = true;
 

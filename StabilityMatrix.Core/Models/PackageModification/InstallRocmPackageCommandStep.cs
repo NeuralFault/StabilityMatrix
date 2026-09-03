@@ -9,7 +9,7 @@ using StabilityMatrix.Core.Services.Rocm;
 
 namespace StabilityMatrix.Core.Models.PackageModification;
 
-public enum WindowsRocmPackageCommandType
+public enum RocmPackageCommandType
 {
     SageAttention,
     DevelopmentSdk,
@@ -17,7 +17,7 @@ public enum WindowsRocmPackageCommandType
     FlashAttention,
 }
 
-public class InstallWindowsRocmPackageCommandStep(
+public class InstallRocmPackageCommandStep(
     IDownloadService downloadService,
     IPyInstallationManager pyInstallationManager,
     IPrerequisiteHelper prerequisiteHelper,
@@ -44,17 +44,17 @@ public class InstallWindowsRocmPackageCommandStep(
 
     public required InstalledPackage InstalledPackage { get; init; }
     public required DirectoryPath WorkingDirectory { get; init; }
-    public required WindowsRocmPackageCommandType CommandType { get; init; }
+    public required RocmPackageCommandType CommandType { get; init; }
     public IReadOnlyDictionary<string, string>? EnvironmentVariables { get; init; }
 
     public string ProgressTitle =>
         CommandType switch
         {
-            WindowsRocmPackageCommandType.SageAttention => "Installing Windows ROCm SageAttention",
-            WindowsRocmPackageCommandType.DevelopmentSdk => "Installing Windows ROCm Development SDK",
-            WindowsRocmPackageCommandType.BitsAndBytes => "Installing Windows ROCm bitsandbytes",
-            WindowsRocmPackageCommandType.FlashAttention => "Installing Windows ROCm Flash Attention",
-            _ => "Running Windows ROCm package command",
+            RocmPackageCommandType.SageAttention => "Installing ROCm SageAttention",
+            RocmPackageCommandType.DevelopmentSdk => "Installing ROCm Development SDK",
+            RocmPackageCommandType.BitsAndBytes => "Installing ROCm bitsandbytes",
+            RocmPackageCommandType.FlashAttention => "Installing ROCm Flash Attention",
+            _ => "Running ROCm package command",
         };
 
     public async Task ExecuteAsync(IProgress<ProgressReport>? progress = null)
@@ -62,7 +62,7 @@ public class InstallWindowsRocmPackageCommandStep(
         if (!OperatingSystem.IsWindows())
         {
             throw new PlatformNotSupportedException(
-                "Windows ROCm package commands are only supported on Windows."
+                "ROCm package commands are only supported on Windows."
             );
         }
 
@@ -97,21 +97,21 @@ public class InstallWindowsRocmPackageCommandStep(
 
         switch (CommandType)
         {
-            case WindowsRocmPackageCommandType.SageAttention:
+            case RocmPackageCommandType.SageAttention:
                 await ExecuteSageAttentionAsync(venvRunner, progress).ConfigureAwait(false);
                 break;
-            case WindowsRocmPackageCommandType.DevelopmentSdk:
+            case RocmPackageCommandType.DevelopmentSdk:
                 await ExecuteDevelopmentSdkAsync(venvRunner, progress).ConfigureAwait(false);
                 break;
-            case WindowsRocmPackageCommandType.BitsAndBytes:
+            case RocmPackageCommandType.BitsAndBytes:
                 await ExecuteBitsAndBytesAsync(venvRunner, pyVersion, progress).ConfigureAwait(false);
                 break;
-            case WindowsRocmPackageCommandType.FlashAttention:
+            case RocmPackageCommandType.FlashAttention:
                 await ExecuteFlashAttentionAsync(venvRunner, progress).ConfigureAwait(false);
                 break;
             default:
                 throw new InvalidOperationException(
-                    $"Unsupported Windows ROCm package command type: {CommandType}."
+                    $"Unsupported ROCm package command type: {CommandType}."
                 );
         }
     }
@@ -123,7 +123,7 @@ public class InstallWindowsRocmPackageCommandStep(
         {
             throw new InvalidOperationException(
                 compatibility.FailureReason
-                    ?? "Windows ROCm package commands require a supported Windows ROCm machine state."
+                    ?? "ROCm package commands require a supported ROCm machine state."
             );
         }
     }
@@ -144,7 +144,7 @@ public class InstallWindowsRocmPackageCommandStep(
     )
     {
         EnsureRocmCompatibility();
-        await rocmPackageHelper.EnsureWindowsSdkDevelAsync(venvRunner, progress).ConfigureAwait(false);
+        await rocmPackageHelper.EnsureRocmSdkDevelAsync(venvRunner, progress).ConfigureAwait(false);
     }
 
     private async Task ExecuteSageAttentionAsync(
@@ -154,19 +154,19 @@ public class InstallWindowsRocmPackageCommandStep(
     {
         EnsureRocmCompatibility();
         await EnsureVcBuildToolsAsync(progress).ConfigureAwait(false);
-        await rocmPackageHelper.EnsureWindowsSdkDevelAsync(venvRunner, progress).ConfigureAwait(false);
+        await rocmPackageHelper.EnsureRocmSdkDevelAsync(venvRunner, progress).ConfigureAwait(false);
 
         progress?.Report(
             new ProgressReport(
                 -1f,
-                "Installing triton-windows for Windows ROCm SageAttention...",
+                "Installing triton-windows for ROCm SageAttention...",
                 isIndeterminate: true
             )
         );
         await venvRunner.PipInstall($"triton-windows=={TritonWindowsVersion}").ConfigureAwait(false);
 
         progress?.Report(
-            new ProgressReport(-1f, "Installing SageAttention for Windows ROCm...", isIndeterminate: true)
+            new ProgressReport(-1f, "Installing SageAttention for ROCm...", isIndeterminate: true)
         );
         await venvRunner.PipInstall($"--no-deps sageattention=={SageAttentionVersion}").ConfigureAwait(false);
 
@@ -179,7 +179,7 @@ public class InstallWindowsRocmPackageCommandStep(
         }
 
         progress?.Report(
-            new ProgressReport(-1f, "Patching SageAttention for Windows ROCm...", isIndeterminate: true)
+            new ProgressReport(-1f, "Patching SageAttention for ROCm...", isIndeterminate: true)
         );
 
         await DownloadAndReplaceFileAsync(
@@ -211,12 +211,12 @@ public class InstallWindowsRocmPackageCommandStep(
         if (pyVersion.Major != 3 || pyVersion.Minor != 12)
         {
             throw new InvalidOperationException(
-                $"Windows ROCm bitsandbytes is only supported on Python 3.12.x (detected version: {pyVersion})."
+                $"ROCm bitsandbytes is only supported on Python 3.12.x (detected version: {pyVersion})."
             );
         }
 
         progress?.Report(
-            new ProgressReport(-1f, "Installing bitsandbytes for Windows ROCm...", isIndeterminate: true)
+            new ProgressReport(-1f, "Installing bitsandbytes for ROCm...", isIndeterminate: true)
         );
         await venvRunner.PipInstall(BitsAndBytesWheelUrl).ConfigureAwait(false);
     }
@@ -231,14 +231,14 @@ public class InstallWindowsRocmPackageCommandStep(
         progress?.Report(
             new ProgressReport(
                 -1f,
-                "Installing Flash Attention dependencies for Windows ROCm...",
+                "Installing Flash Attention dependencies for ROCm...",
                 isIndeterminate: true
             )
         );
         await venvRunner.PipInstall(AmdAiterWheelUrl).ConfigureAwait(false);
 
         progress?.Report(
-            new ProgressReport(-1f, "Installing Flash Attention for Windows ROCm...", isIndeterminate: true)
+            new ProgressReport(-1f, "Installing Flash Attention for ROCm...", isIndeterminate: true)
         );
         await venvRunner.PipInstall(FlashAttentionWheelUrl).ConfigureAwait(false);
     }

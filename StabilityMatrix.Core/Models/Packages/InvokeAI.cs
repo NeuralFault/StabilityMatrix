@@ -232,7 +232,7 @@ public class InvokeAI(
         progress?.Report(new ProgressReport(-1f, "Installing Package", isIndeterminate: true));
 
         var torchVersion = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
-        var isSupportedWindowsRocmInstall =
+        var isSupportedRocmInstall =
             Compat.IsWindows
             && torchVersion == TorchIndex.Rocm
             && rocmPackageHelper.GetCompatibility().IsCompatible;
@@ -268,7 +268,7 @@ public class InvokeAI(
             torchVersion.ToString().ToLowerInvariant()
         ]?.GetValue<string>();
 
-        if (isSupportedWindowsRocmInstall)
+        if (isSupportedRocmInstall)
         {
             index = null;
         }
@@ -286,18 +286,16 @@ public class InvokeAI(
 
         await venvRunner.PipInstall(invokeInstallArgs, onConsoleOutput).ConfigureAwait(false);
 
-        if (isSupportedWindowsRocmInstall)
+        if (isSupportedRocmInstall)
         {
             var installProfile = InvokeAiRocmProfile.CreateInstallProfile(
                 options.PythonOptions.PythonVersion ?? RecommendedPythonVersion
             );
 
-            progress?.Report(
-                new ProgressReport(-1f, "Installing Windows ROCm torch...", isIndeterminate: true)
-            );
+            progress?.Report(new ProgressReport(-1f, "Installing ROCm torch...", isIndeterminate: true));
 
             await rocmPackageHelper
-                .InstallWindowsNativeTorchAsync(
+                .InstallRocmNativeTorchAsync(
                     venvRunner,
                     installedPackage,
                     installProfile,

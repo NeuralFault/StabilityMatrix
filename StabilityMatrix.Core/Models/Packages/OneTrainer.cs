@@ -85,15 +85,15 @@ public class OneTrainer(
 
         var torchVersion = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
 
-        // Windows ROCm path
-        var isWindowsRocm =
+        // ROCm path
+        var isRocm =
             Compat.IsWindows
             && torchVersion == TorchIndex.Rocm
             && rocmPackageHelper.GetCompatibility().IsCompatible;
 
-        if (isWindowsRocm)
+        if (isRocm)
         {
-            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(OneTrainerRocmProfile.Default);
+            var config = rocmPackageHelper.BuildRocmNativeInstallConfig(OneTrainerRocmProfile.Default);
 
             await StandardPipInstallProcessAsync(
                     venvRunner,
@@ -109,12 +109,10 @@ public class OneTrainer(
                 )
                 .ConfigureAwait(false);
 
-            progress?.Report(
-                new ProgressReport(-1f, "Installing Windows ROCm torch...", isIndeterminate: true)
-            );
+            progress?.Report(new ProgressReport(-1f, "Installing ROCm torch...", isIndeterminate: true));
 
             await rocmPackageHelper
-                .InstallWindowsNativeTorchAsync(
+                .InstallRocmNativeTorchAsync(
                     venvRunner,
                     installedPackage,
                     OneTrainerRocmProfile.CreateInstallProfile(
