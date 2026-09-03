@@ -1,3 +1,4 @@
+using StabilityMatrix.Core.Helper;
 using StabilityMatrix.Core.Models.Packages;
 using StabilityMatrix.Core.Python;
 
@@ -20,20 +21,19 @@ public class OneTrainerRocmProfile : RocmPackageProfile
 
     public static RocmPackageProfile CreateInstallProfile(PyVersion pyVersion)
     {
-        if (pyVersion.Major == 3 && pyVersion.Minor == 12)
+        IEnumerable<string> postTorchInstallPipArgs = Array.Empty<string>();
+
+        if (Compat.IsWindows)
         {
-            return new RocmPackageProfile
-            {
-                InstallConfig = new PipInstallConfig
-                {
-                    PostTorchInstallPipArgs = [TritonWindowsPackage, BitsAndBytesWheelUrl],
-                },
-            };
+            postTorchInstallPipArgs =
+                pyVersion.Major == 3 && pyVersion.Minor == 12
+                    ? new[] { TritonWindowsPackage, BitsAndBytesWheelUrl }
+                    : new[] { TritonWindowsPackage };
         }
 
         return new RocmPackageProfile
         {
-            InstallConfig = new PipInstallConfig { PostTorchInstallPipArgs = [TritonWindowsPackage] },
+            InstallConfig = new PipInstallConfig { PostTorchInstallPipArgs = postTorchInstallPipArgs },
         };
     }
 }

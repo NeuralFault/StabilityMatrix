@@ -486,7 +486,7 @@ public class ComfyUI(
                 ?? HardwareHelper.HasLegacyNvidiaGpu()
             );
 
-        if (Compat.IsWindows && torchIndex == TorchIndex.Rocm && HasRocmSupport())
+        if (torchIndex == TorchIndex.Rocm && HasRocmSupport())
         {
             var config = rocmPackageHelper.BuildRocmNativeInstallConfig(ComfyRocmProfile.Default);
 
@@ -538,7 +538,7 @@ public class ComfyUI(
                 .ConfigureAwait(false);
         }
 
-        if (!(Compat.IsWindows && torchIndex == TorchIndex.Rocm && HasRocmSupport()))
+        if (!(torchIndex == TorchIndex.Rocm && HasRocmSupport()))
         {
             try
             {

@@ -65,8 +65,7 @@ public class Wan2GP(
 
     public override IEnumerable<TorchIndex> AvailableTorchIndices => [TorchIndex.Cuda, TorchIndex.Rocm];
 
-    public override bool IsCompatible =>
-        HardwareHelper.HasNvidiaGpu() || (Compat.IsWindows ? HasRocmSupport() : HardwareHelper.HasAmdGpu());
+    public override bool IsCompatible => HardwareHelper.HasNvidiaGpu() || HasRocmSupport();
 
     public override string MainBranch => "main";
     public override bool ShouldIgnoreReleases => true;
@@ -222,7 +221,7 @@ public class Wan2GP(
     {
         // Check for AMD ROCm support (Windows or Linux)
         var preferRocm =
-            (Compat.IsWindows && HasRocmSupport())
+            HasRocmSupport()
             || (
                 Compat.IsLinux
                 && (SettingsManager.Settings.PreferredGpu?.IsAmd ?? HardwareHelper.PreferRocm())
@@ -380,7 +379,7 @@ public class Wan2GP(
         CancellationToken cancellationToken
     )
     {
-        if (Compat.IsWindows)
+        if (Compat.IsWindows || HasRocmSupport())
         {
             var config = rocmPackageHelper.BuildRocmNativeInstallConfig(Wan2GpRocmProfile.Default);
 

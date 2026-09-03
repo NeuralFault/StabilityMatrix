@@ -104,7 +104,7 @@ public class Reforge(
     {
         var torchIndex = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
 
-        if (!Compat.IsWindows || !rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(torchIndex))
+        if (!rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(torchIndex))
         {
             await base.InstallPackage(
                     installLocation,

@@ -59,7 +59,7 @@ public class OneTrainer(
 
     public override TorchIndex GetRecommendedTorchVersion()
     {
-        if (Compat.IsWindows && rocmPackageHelper.GetCompatibility().IsCompatible)
+        if (rocmPackageHelper.GetCompatibility().IsCompatible)
         {
             return TorchIndex.Rocm;
         }
@@ -86,10 +86,7 @@ public class OneTrainer(
         var torchVersion = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
 
         // ROCm path
-        var isRocm =
-            Compat.IsWindows
-            && torchVersion == TorchIndex.Rocm
-            && rocmPackageHelper.GetCompatibility().IsCompatible;
+        var isRocm = torchVersion == TorchIndex.Rocm && rocmPackageHelper.GetCompatibility().IsCompatible;
 
         if (isRocm)
         {

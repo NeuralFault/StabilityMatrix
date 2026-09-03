@@ -120,7 +120,7 @@ public class InvokeAI(
             return TorchIndex.Mps;
         }
 
-        if (Compat.IsWindows && rocmPackageHelper.GetCompatibility().IsCompatible)
+        if (rocmPackageHelper.GetCompatibility().IsCompatible)
         {
             return TorchIndex.Rocm;
         }
@@ -233,9 +233,7 @@ public class InvokeAI(
 
         var torchVersion = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
         var isSupportedRocmInstall =
-            Compat.IsWindows
-            && torchVersion == TorchIndex.Rocm
-            && rocmPackageHelper.GetCompatibility().IsCompatible;
+            torchVersion == TorchIndex.Rocm && rocmPackageHelper.GetCompatibility().IsCompatible;
         var isLegacyNvidiaGpu =
             SettingsManager.Settings.PreferredGpu?.IsLegacyNvidiaGpu() ?? HardwareHelper.HasLegacyNvidiaGpu();
         var fallbackIndex = torchVersion switch
