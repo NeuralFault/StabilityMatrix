@@ -9,6 +9,7 @@ using StabilityMatrix.Core.Models.Progress;
 using StabilityMatrix.Core.Processes;
 using StabilityMatrix.Core.Python;
 using StabilityMatrix.Core.Services;
+using StabilityMatrix.Core.Services.Rocm;
 
 namespace StabilityMatrix.Core.Models.Packages;
 
@@ -19,7 +20,8 @@ public class SDWebForge(
     IDownloadService downloadService,
     IPrerequisiteHelper prerequisiteHelper,
     IPyInstallationManager pyInstallationManager,
-    IPipWheelService pipWheelService
+    IPipWheelService pipWheelService,
+    IRocmPackageHelper rocmPackageHelper
 )
     : A3WebUI(
         githubApi,
@@ -27,7 +29,8 @@ public class SDWebForge(
         downloadService,
         prerequisiteHelper,
         pyInstallationManager,
-        pipWheelService
+        pipWheelService,
+        rocmPackageHelper
     )
 {
     public override string Name => "stable-diffusion-webui-forge";

@@ -12,9 +12,11 @@ using StabilityMatrix.Core.Helper.HardwareInfo;
 using StabilityMatrix.Core.Models.FileInterfaces;
 using StabilityMatrix.Core.Models.Packages.Extensions;
 using StabilityMatrix.Core.Models.Progress;
+using StabilityMatrix.Core.Models.Rocm;
 using StabilityMatrix.Core.Processes;
 using StabilityMatrix.Core.Python;
 using StabilityMatrix.Core.Services;
+using StabilityMatrix.Core.Services.Rocm;
 
 namespace StabilityMatrix.Core.Models.Packages;
 
@@ -25,7 +27,8 @@ public class A3WebUI(
     IDownloadService downloadService,
     IPrerequisiteHelper prerequisiteHelper,
     IPyInstallationManager pyInstallationManager,
-    IPipWheelService pipWheelService
+    IPipWheelService pipWheelService,
+    IRocmPackageHelper rocmPackageHelper
 )
     : BaseGitPackage(
         githubApi,
@@ -326,7 +329,21 @@ public class A3WebUI(
         InstalledPackage installedPackage
     )
     {
-        return GetEnvVars(env);
+        env = GetEnvVars(env);
+
+        // Legacy packages manage their own launch environment and are excluded from helper-managed ROCm env passing.
+        if (PackageType == PackageType.Legacy)
+        {
+            return env;
+        }
+
+        var selectedTorchIndex = installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
+        if (!rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(selectedTorchIndex))
+        {
+            return env;
+        }
+
+        return env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(new RocmPackageProfile()));
     }
 
     protected virtual ImmutableDictionary<string, string> GetEnvVars(ImmutableDictionary<string, string> env)

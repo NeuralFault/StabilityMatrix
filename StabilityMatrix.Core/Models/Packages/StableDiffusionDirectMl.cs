@@ -8,6 +8,7 @@ using StabilityMatrix.Core.Models.Progress;
 using StabilityMatrix.Core.Processes;
 using StabilityMatrix.Core.Python;
 using StabilityMatrix.Core.Services;
+using StabilityMatrix.Core.Services.Rocm;
 
 namespace StabilityMatrix.Core.Models.Packages;
 
@@ -18,7 +19,8 @@ public class StableDiffusionDirectMl(
     IDownloadService downloadService,
     IPrerequisiteHelper prerequisiteHelper,
     IPyInstallationManager pyInstallationManager,
-    IPipWheelService pipWheelService
+    IPipWheelService pipWheelService,
+    IRocmPackageHelper rocmPackageHelper
 )
     : A3WebUI(
         githubApi,
@@ -26,7 +28,8 @@ public class StableDiffusionDirectMl(
         downloadService,
         prerequisiteHelper,
         pyInstallationManager,
-        pipWheelService
+        pipWheelService,
+        rocmPackageHelper
     )
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();

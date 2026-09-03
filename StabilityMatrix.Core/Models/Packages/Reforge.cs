@@ -28,7 +28,8 @@ public class Reforge(
         downloadService,
         prerequisiteHelper,
         pyInstallationManager,
-        pipWheelService
+        pipWheelService,
+        rocmPackageHelper
     )
 {
     public override string Name => "reforge";

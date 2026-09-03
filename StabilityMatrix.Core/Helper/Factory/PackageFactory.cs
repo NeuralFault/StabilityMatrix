@@ -78,7 +78,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "Fooocus-ControlNet-SDXL" => new FocusControlNet(
                 githubApiCache,
@@ -137,7 +138,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "stable-diffusion-webui-directml" => new StableDiffusionDirectMl(
                 githubApiCache,
@@ -145,7 +147,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "stable-diffusion-webui-ux" => new StableDiffusionUx(
                 githubApiCache,
@@ -244,7 +247,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "forge-classic" => new ForgeClassic(
                 githubApiCache,
@@ -252,7 +256,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "forge-neo" => new ForgeNeo(
                 githubApiCache,
@@ -260,7 +265,8 @@ public class PackageFactory : IPackageFactory
                 downloadService,
                 prerequisiteHelper,
                 pyInstallationManager,
-                pipWheelService
+                pipWheelService,
+                rocmPackageHelper
             ),
             "framepack" => new FramePack(
                 githubApiCache,
