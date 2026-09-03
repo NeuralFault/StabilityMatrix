@@ -40,11 +40,11 @@ public class RocmPackageHelper : IRocmPackageHelper
     public RocmPackageHelper(ISettingsManager settingsManager)
     {
         this.settingsManager = settingsManager;
-        machineState = new Lazy<RocmMachineState>(ResolveWindowsMachineState);
+        machineState = new Lazy<RocmMachineState>(ResolveMachineState);
     }
 
     /// <summary>
-    /// Evaluates the current Windows machine state and returns the resolved ROCm compatibility result.
+    /// Evaluates the current machine state and returns the resolved ROCm compatibility result.
     /// </summary>
     public RocmCompatibilityResult GetCompatibility()
     {
@@ -52,7 +52,7 @@ public class RocmPackageHelper : IRocmPackageHelper
     }
 
     /// <summary>
-    /// Resolves launch-time ROCm runtime details from the current Windows machine state.
+    /// Resolves launch-time ROCm runtime details from the current machine state.
     /// This is used to build helper-managed environment variables for package launch.
     /// </summary>
     private RocmRuntimeContext ResolveRuntimeContext()
@@ -107,9 +107,9 @@ public class RocmPackageHelper : IRocmPackageHelper
     }
 
     /// <inheritdoc />
-    public bool ShouldApplyWindowsLaunchEnvironment(TorchIndex selectedTorchIndex)
+    public bool ShouldApplyRocmLaunchEnvironment(TorchIndex selectedTorchIndex)
     {
-        if (!Compat.IsWindows || selectedTorchIndex != TorchIndex.Rocm)
+        if (selectedTorchIndex != TorchIndex.Rocm)
             return false;
         return GetCompatibility().IsCompatible;
     }
@@ -117,7 +117,9 @@ public class RocmPackageHelper : IRocmPackageHelper
     /// <inheritdoc />
     public IReadOnlyList<string> GetWindowsLaunchNoticeLines(TorchIndex selectedTorchIndex)
     {
-        return ShouldApplyWindowsLaunchEnvironment(selectedTorchIndex) ? GetWindowsLaunchNoticeLines() : [];
+        return Compat.IsWindows && ShouldApplyRocmLaunchEnvironment(selectedTorchIndex)
+            ? GetWindowsLaunchNoticeLines()
+            : [];
     }
 
     /// <summary>
@@ -132,7 +134,7 @@ public class RocmPackageHelper : IRocmPackageHelper
     )
     {
         var state = machineState.Value;
-        var multiArchPythonPackageIndexUrl = WindowsRocmSupport.GetMultiArchPythonPackageIndexUrl(
+        var multiArchPythonPackageIndexUrl = RocmSupport.GetMultiArchPythonPackageIndexUrl(
             state.RuntimeGfxArch
         );
 
@@ -252,7 +254,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         progress?.Report(new ProgressReport(-1f, "Installing ROCm torch...", isIndeterminate: true));
 
         var installConfig = profile.InstallConfig;
-        var multiArchPythonPackageIndexUrl = WindowsRocmSupport.GetMultiArchPythonPackageIndexUrl(
+        var multiArchPythonPackageIndexUrl = RocmSupport.GetMultiArchPythonPackageIndexUrl(
             state.RuntimeGfxArch
         );
         var torchArgs = new PipInstallArgs()
@@ -315,7 +317,7 @@ public class RocmPackageHelper : IRocmPackageHelper
         };
     }
 
-    private RocmMachineState ResolveWindowsMachineState()
+    private RocmMachineState ResolveMachineState()
     {
         if (settingsManager.Settings.PreferredGpu is { } preferredGpu && !preferredGpu.IsAmd)
         {
@@ -338,13 +340,13 @@ public class RocmPackageHelper : IRocmPackageHelper
             };
         }
 
-        var supportedAmdGpus = amdGpus.Where(WindowsRocmSupport.IsSupportedGpu).ToList();
+        var supportedAmdGpus = amdGpus.Where(RocmSupport.IsSupportedGpu).ToList();
         if (supportedAmdGpus.Count == 0)
         {
             return new RocmMachineState
             {
                 IsCompatible = false,
-                FailureReason = "No AMD GPU with a supported Windows ROCm architecture was detected.",
+                FailureReason = "No AMD GPU with a supported ROCm architecture was detected.",
             };
         }
 
@@ -352,7 +354,7 @@ public class RocmPackageHelper : IRocmPackageHelper
             TryResolvePreferredAmdGpu(supportedAmdGpus, settingsManager.Settings.PreferredGpu)
             ?? supportedAmdGpus.First();
         var runtimeGfxArch =
-            WindowsRocmSupport.TryGetCanonicalArchitecture(selectedGpu.GetAmdGfxArch())
+            RocmSupport.TryGetCanonicalArchitecture(selectedGpu.GetAmdGfxArch())
             ?? GetSupportedFallbackGfxArch(supportedAmdGpus);
         var isCompatible = !string.IsNullOrWhiteSpace(runtimeGfxArch);
 
@@ -364,7 +366,7 @@ public class RocmPackageHelper : IRocmPackageHelper
                 : "No supported AMD GFX architecture could be resolved for ROCm.",
             SelectedGpu = selectedGpu,
             RuntimeGfxArch = runtimeGfxArch,
-            MultiArchDeviceExtra = WindowsRocmSupport.TryGetMultiArchDeviceExtra(runtimeGfxArch),
+            MultiArchDeviceExtra = RocmSupport.TryGetMultiArchDeviceExtra(runtimeGfxArch),
         };
     }
 
@@ -409,9 +411,9 @@ public class RocmPackageHelper : IRocmPackageHelper
     private static string? GetSupportedFallbackGfxArch(IEnumerable<GpuInfo> availableGpus)
     {
         return availableGpus
-            .Where(WindowsRocmSupport.IsSupportedGpu)
-            .Select(gpu => WindowsRocmSupport.TryGetCanonicalArchitecture(gpu.GetAmdGfxArch()))
-            .FirstOrDefault(WindowsRocmSupport.IsSupportedArchitecture);
+            .Where(RocmSupport.IsSupportedGpu)
+            .Select(gpu => RocmSupport.TryGetCanonicalArchitecture(gpu.GetAmdGfxArch()))
+            .FirstOrDefault(RocmSupport.IsSupportedArchitecture);
     }
 
     /// <summary>
@@ -582,12 +584,12 @@ public class RocmPackageHelper : IRocmPackageHelper
         SetIfNotNull(environment, "MIOPEN_FIND_ENFORCE", options.MiopenFindEnforce);
         SetIfNotNull(environment, "PYTORCH_ALLOC_CONF", options.PyTorchAllocConf);
 
-        if (options.ApplyAotritonExperimental && WindowsRocmSupport.SupportsAotritonExperimental(gfxArch))
+        if (options.ApplyAotritonExperimental && RocmSupport.SupportsAotritonExperimental(gfxArch))
         {
             environment["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1";
         }
 
-        if (options.ApplyLegacySdpFallback && WindowsRocmSupport.IsLegacyArchitecture(gfxArch))
+        if (options.ApplyLegacySdpFallback && RocmSupport.IsLegacyArchitecture(gfxArch))
         {
             environment["TORCH_BACKENDS_CUDA_FLASH_SDP_ENABLED"] = "0";
             environment["TORCH_BACKENDS_CUDA_MEM_EFF_SDP_ENABLED"] = "0";

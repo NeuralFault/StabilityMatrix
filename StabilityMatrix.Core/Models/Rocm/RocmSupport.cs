@@ -3,10 +3,10 @@ using StabilityMatrix.Core.Helper.HardwareInfo;
 namespace StabilityMatrix.Core.Models.Rocm;
 
 /// <summary>
-/// Centralizes Windows ROCm support and architecture policy so hardware detection, package selection,
+/// Centralizes ROCm support and architecture policy so hardware detection, package selection,
 /// installation, and shared launch decisions use the same support map.
 /// </summary>
-public static class WindowsRocmSupport
+public static class RocmSupport
 {
     public const string StableMultiArchPythonPackageIndexUrl = "https://stable.repo.amd.com/rocm/whl-next/";
     public const string NightlyMultiArchPythonPackageIndexUrl = "https://nightly.repo.amd.com/rocm/whl-next/";
@@ -36,7 +36,9 @@ public static class WindowsRocmSupport
     {
         return gfxArch?.StartsWith("gfx110", StringComparison.OrdinalIgnoreCase) == true
             || gfxArch?.StartsWith("gfx115", StringComparison.OrdinalIgnoreCase) == true
-            || gfxArch?.StartsWith("gfx120", StringComparison.OrdinalIgnoreCase) == true;
+            || gfxArch?.StartsWith("gfx120", StringComparison.OrdinalIgnoreCase) == true
+            || gfxArch?.StartsWith("gfx90a", StringComparison.OrdinalIgnoreCase) == true
+            || gfxArch?.StartsWith("gfx950", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     public static bool SupportsAotritonExperimental(string? gfxArch)
@@ -73,7 +75,7 @@ public static class WindowsRocmSupport
 
         return normalizedArch switch
         {
-            "gfx900" or "gfx906" or "gfx1150" or "gfx1151" or "gfx1152" or "gfx1153" => normalizedArch,
+            "gfx900" or "gfx906" or "gfx908" or "gfx90a" or "gfx950" or "gfx1150" or "gfx1151" or "gfx1152" or "gfx1153" => normalizedArch,
             var s
                 when s.StartsWith("gfx101", StringComparison.Ordinal)
                     || s.StartsWith("gfx103", StringComparison.Ordinal)

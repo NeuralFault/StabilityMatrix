@@ -4,11 +4,11 @@ using StabilityMatrix.Core.Python;
 namespace StabilityMatrix.Core.Models.Rocm;
 
 /// <summary>
-/// Shared Windows ROCm profile for InvokeAI.
+/// Shared ROCm profile for InvokeAI.
 /// </summary>
-public class InvokeAiWindowsRocmProfile : RocmPackageProfile
+public class InvokeAiRocmProfile : RocmPackageProfile
 {
-    public static RocmPackageProfile Default { get; } = new InvokeAiWindowsRocmProfile();
+    public static RocmPackageProfile Default { get; } = new InvokeAiRocmProfile();
 
     //Restores flop counter functionality requiring triton module
     private const string TritonWindowsPackage = "triton-windows";

@@ -66,8 +66,7 @@ public class Wan2GP(
     public override IEnumerable<TorchIndex> AvailableTorchIndices => [TorchIndex.Cuda, TorchIndex.Rocm];
 
     public override bool IsCompatible =>
-        HardwareHelper.HasNvidiaGpu()
-        || (Compat.IsWindows ? HasWindowsRocmSupport() : HardwareHelper.HasAmdGpu());
+        HardwareHelper.HasNvidiaGpu() || (Compat.IsWindows ? HasRocmSupport() : HardwareHelper.HasAmdGpu());
 
     public override string MainBranch => "main";
     public override bool ShouldIgnoreReleases => true;
@@ -89,14 +88,14 @@ public class Wan2GP(
     /// </summary>
     private bool IsAmdRocm => GetRecommendedTorchVersion() == TorchIndex.Rocm;
 
-    private bool HasWindowsRocmSupport()
+    private bool HasRocmSupport()
     {
-        return HasWindowsRocmSupport(rocmPackageHelper);
+        return HasRocmSupport(rocmPackageHelper);
     }
 
-    private RocmCompatibilityResult GetWindowsRocmCompatibility()
+    private RocmCompatibilityResult GetRocmCompatibility()
     {
-        return GetWindowsRocmCompatibility(rocmPackageHelper);
+        return GetRocmCompatibility(rocmPackageHelper);
     }
 
     /// <summary>
@@ -223,7 +222,7 @@ public class Wan2GP(
     {
         // Check for AMD ROCm support (Windows or Linux)
         var preferRocm =
-            (Compat.IsWindows && HasWindowsRocmSupport())
+            (Compat.IsWindows && HasRocmSupport())
             || (
                 Compat.IsLinux
                 && (SettingsManager.Settings.PreferredGpu?.IsAmd ?? HardwareHelper.PreferRocm())
@@ -383,7 +382,7 @@ public class Wan2GP(
     {
         if (Compat.IsWindows)
         {
-            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(Wan2GpWindowsRocmProfile.Default);
+            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(Wan2GpRocmProfile.Default);
 
             await StandardPipInstallProcessAsync(
                     venvRunner,
@@ -400,7 +399,7 @@ public class Wan2GP(
                 .InstallWindowsNativeTorchAsync(
                     venvRunner,
                     installedPackage,
-                    Wan2GpWindowsRocmProfile.Default,
+                    Wan2GpRocmProfile.Default,
                     progress,
                     onConsoleOutput,
                     cancellationToken
@@ -444,9 +443,9 @@ public class Wan2GP(
 
         var selectedTorchIndex = installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
 
-        if (Compat.IsWindows && selectedTorchIndex == TorchIndex.Rocm && HasWindowsRocmSupport())
+        if (selectedTorchIndex == TorchIndex.Rocm && HasRocmSupport())
         {
-            var rocmEnvironment = rocmPackageHelper.BuildLaunchEnvironment(Wan2GpWindowsRocmProfile.Default);
+            var rocmEnvironment = rocmPackageHelper.BuildLaunchEnvironment(Wan2GpRocmProfile.Default);
             VenvRunner.UpdateEnvironmentVariables(env => env.SetItems(rocmEnvironment));
         }
 

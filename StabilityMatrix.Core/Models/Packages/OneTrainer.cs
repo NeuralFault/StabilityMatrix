@@ -93,9 +93,7 @@ public class OneTrainer(
 
         if (isWindowsRocm)
         {
-            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(
-                OneTrainerWindowsRocmProfile.Default
-            );
+            var config = rocmPackageHelper.BuildWindowsNativeInstallConfig(OneTrainerRocmProfile.Default);
 
             await StandardPipInstallProcessAsync(
                     venvRunner,
@@ -119,7 +117,7 @@ public class OneTrainer(
                 .InstallWindowsNativeTorchAsync(
                     venvRunner,
                     installedPackage,
-                    OneTrainerWindowsRocmProfile.CreateInstallProfile(
+                    OneTrainerRocmProfile.CreateInstallProfile(
                         options.PythonOptions.PythonVersion ?? RecommendedPythonVersion
                     ),
                     progress,
@@ -174,10 +172,10 @@ public class OneTrainer(
 
         var selectedTorchIndex = installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
 
-        if (rocmPackageHelper.ShouldApplyWindowsLaunchEnvironment(selectedTorchIndex))
+        if (rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(selectedTorchIndex))
         {
             VenvRunner.UpdateEnvironmentVariables(env =>
-                env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(OneTrainerWindowsRocmProfile.Default))
+                env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(OneTrainerRocmProfile.Default))
             );
         }
 
@@ -196,12 +194,6 @@ public class OneTrainer(
     private IReadOnlyList<string> GetLaunchNoticeLines(InstalledPackage installedPackage)
     {
         var selectedTorchIndex = installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
-
-        if (!rocmPackageHelper.ShouldApplyWindowsLaunchEnvironment(selectedTorchIndex))
-        {
-            return [];
-        }
-
         return [.. rocmPackageHelper.GetWindowsLaunchNoticeLines(selectedTorchIndex)];
     }
 

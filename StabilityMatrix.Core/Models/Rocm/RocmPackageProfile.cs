@@ -29,17 +29,17 @@ public class RocmPackageProfile
     public RocmEnvironmentOptions EnvironmentOptions { get; init; } = new();
 
     /// <summary>
-    /// Allows a package profile to adjust default launch options for Windows ROCm.
+    /// Allows a package profile to adjust default launch options for ROCm.
     /// Default implementation is a no-op; profiles that need package-specific adjustments
     /// should override this method.
     /// </summary>
-    public virtual void ApplyWindowsRocmLaunchDefaults(
+    public virtual void ApplyRocmLaunchDefaults(
         List<LaunchOptionDefinition> launchOptions,
         IRocmPackageHelper rocmPackageHelper
     ) { }
 
     /// <summary>
-    /// Returns a package-specific preferred cross-attention argument for Windows ROCm launches.
+    /// Returns a package-specific preferred cross-attention argument for ROCm launches.
     /// Default implementation returns <c>null</c> indicating no preference.
     /// </summary>
     public virtual string? GetPreferredCrossAttentionArgument(IRocmPackageHelper rocmPackageHelper)

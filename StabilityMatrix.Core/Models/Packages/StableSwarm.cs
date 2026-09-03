@@ -593,15 +593,15 @@ public class StableSwarm(
             return new Dictionary<string, string>();
         }
 
-        return rocmPackageHelper.BuildLaunchEnvironment(ComfyWindowsRocmProfile.Default);
+        return rocmPackageHelper.BuildLaunchEnvironment(ComfyRocmProfile.Default);
     }
 
     /// <summary>
-    /// Returns true only when the linked backend is standard ComfyUI on a supported Windows ROCm path.
+    /// Returns true only when the linked backend is standard ComfyUI on a supported ROCm path.
     /// </summary>
     private bool ShouldInjectLinkedComfyRocmEnvironment(InstalledPackage comfyPackage)
     {
-        if (!Compat.IsWindows || comfyPackage.PackageName != nameof(ComfyUI))
+        if (comfyPackage.PackageName != nameof(ComfyUI))
         {
             return false;
         }

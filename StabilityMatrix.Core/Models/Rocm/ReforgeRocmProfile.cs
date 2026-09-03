@@ -5,16 +5,16 @@ using StabilityMatrix.Core.Services.Rocm;
 namespace StabilityMatrix.Core.Models.Rocm;
 
 /// <summary>
-/// Shared Windows ROCm profile for reForge.
+/// Shared ROCm profile for reForge.
 /// </summary>
-public class ReforgeWindowsRocmProfile : RocmPackageProfile
+public class ReforgeRocmProfile : RocmPackageProfile
 {
     // reForge currently pins accelerate 0.21.0, but 0.22.0 avoids the early distributed.torch import that breaks on Windows ROCm torch builds
     // caused by the marigold depth controlnet preprocessor
-    public const string WindowsRocmAccelerateVersion = "0.22.0";
+    public const string RocmAccelerateVersion = "0.22.0";
     private static readonly string[] DisabledCudaLaunchOptionNames = ["CUDA Malloc", "CUDA Stream"];
 
-    public static ReforgeWindowsRocmProfile Default { get; } = new ReforgeWindowsRocmProfile();
+    public static ReforgeRocmProfile Default { get; } = new ReforgeRocmProfile();
 
     public static RocmPackageProfile CreateProfile(IEnumerable<string> requirementsFilePaths)
     {
@@ -32,7 +32,7 @@ public class ReforgeWindowsRocmProfile : RocmPackageProfile
                 [
                     "numpy==1.26.4",
                     "setuptools==69.5.1",
-                    $"accelerate=={WindowsRocmAccelerateVersion}",
+                    $"accelerate=={RocmAccelerateVersion}",
                 ],
                 PostTorchInstallPipArgs =
                 [
@@ -46,12 +46,12 @@ public class ReforgeWindowsRocmProfile : RocmPackageProfile
         };
     }
 
-    public override void ApplyWindowsRocmLaunchDefaults(
+    public override void ApplyRocmLaunchDefaults(
         List<LaunchOptionDefinition> launchOptions,
         IRocmPackageHelper rocmPackageHelper
     )
     {
-        if (!(Compat.IsWindows && rocmPackageHelper.GetCompatibility().IsCompatible))
+        if (!rocmPackageHelper.GetCompatibility().IsCompatible)
         {
             return;
         }
@@ -76,7 +76,7 @@ public class ReforgeWindowsRocmProfile : RocmPackageProfile
             return null;
         }
 
-        return WindowsRocmSupport.PreferLegacyAttentionFallback(compatibility.ResolvedGfxArch)
+        return RocmSupport.PreferLegacyAttentionFallback(compatibility.ResolvedGfxArch)
             ? "--attention-quad"
             : "--attention-pytorch";
     }

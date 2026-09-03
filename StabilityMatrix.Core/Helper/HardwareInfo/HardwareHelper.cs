@@ -338,11 +338,11 @@ public static partial class HardwareHelper
         return IterGpuInfo().Any(gpu => gpu.IsAmd);
     }
 
-    public static bool HasWindowsRocmSupportedGpu() => IterGpuInfo().Any(WindowsRocmSupport.IsSupportedGpu);
+    public static bool HasWindowsRocmSupportedGpu() => IterGpuInfo().Any(RocmSupport.IsSupportedGpu);
 
     public static GpuInfo? GetWindowsRocmSupportedGpu()
     {
-        return IterGpuInfo().FirstOrDefault(WindowsRocmSupport.IsSupportedGpu);
+        return IterGpuInfo().FirstOrDefault(RocmSupport.IsSupportedGpu);
     }
 
     public static bool HasIntelGpu() => IterGpuInfo().Any(gpu => gpu.IsIntel);

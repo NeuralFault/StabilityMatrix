@@ -29,10 +29,9 @@ public interface IRocmPackageHelper
     IReadOnlyList<string> GetWindowsLaunchNoticeLines(TorchIndex selectedTorchIndex);
 
     /// <summary>
-    /// Returns true when the current machine is Windows, the selected torch index is ROCm,
-    /// and the machine is compatible with Windows native ROCm.
+    /// Returns true when the selected torch index is ROCm and the machine is compatible with ROCm.
     /// </summary>
-    bool ShouldApplyWindowsLaunchEnvironment(TorchIndex selectedTorchIndex);
+    bool ShouldApplyRocmLaunchEnvironment(TorchIndex selectedTorchIndex);
 
     /// <summary>
     /// Ensures a usable Windows ROCm SDK devel package is installed from the ROCm multi-arch index,

@@ -66,7 +66,7 @@ public record GpuInfo
 
     public bool IsWindowsRocmSupportedGpu()
     {
-        return WindowsRocmSupport.IsSupportedGpu(this);
+        return RocmSupport.IsSupportedGpu(this);
     }
 
     public bool IsAmd =>

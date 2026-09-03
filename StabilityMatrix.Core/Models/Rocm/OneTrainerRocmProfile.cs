@@ -4,12 +4,12 @@ using StabilityMatrix.Core.Python;
 namespace StabilityMatrix.Core.Models.Rocm;
 
 /// <summary>
-/// Shared Windows ROCm profile for OneTrainer.
+/// Shared ROCm profile for OneTrainer.
 /// Python 3.12 only - required by compatible bitsandbytes wheel.
 /// </summary>
-public class OneTrainerWindowsRocmProfile : RocmPackageProfile
+public class OneTrainerRocmProfile : RocmPackageProfile
 {
-    public static RocmPackageProfile Default { get; } = new OneTrainerWindowsRocmProfile();
+    public static RocmPackageProfile Default { get; } = new OneTrainerRocmProfile();
 
     // Restores flop counter functionality requiring triton module
     private const string TritonWindowsPackage = "triton-windows";

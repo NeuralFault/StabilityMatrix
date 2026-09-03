@@ -10,25 +10,25 @@ namespace StabilityMatrix.Tests.Core;
 public class RocmPackageHelperTests
 {
     [TestMethod]
-    public void WindowsRocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForSupportedArch()
+    public void RocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForSupportedArch()
     {
-        var deviceExtra = WindowsRocmSupport.TryGetMultiArchDeviceExtra("gfx1201");
+        var deviceExtra = RocmSupport.TryGetMultiArchDeviceExtra("gfx1201");
 
         Assert.AreEqual("device-gfx1201", deviceExtra);
     }
 
     [TestMethod]
-    public void WindowsRocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForCanonicalVega20Arch()
+    public void RocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForCanonicalVega20Arch()
     {
-        var deviceExtra = WindowsRocmSupport.TryGetMultiArchDeviceExtra("gfx906");
+        var deviceExtra = RocmSupport.TryGetMultiArchDeviceExtra("gfx906");
 
         Assert.AreEqual("device-gfx906", deviceExtra);
     }
 
     [TestMethod]
-    public void WindowsRocmSupport_TryGetCanonicalArchitecture_ReturnsCanonicalArch_WhenAlreadyCanonical()
+    public void RocmSupport_TryGetCanonicalArchitecture_ReturnsCanonicalArch_WhenAlreadyCanonical()
     {
-        var canonicalArch = WindowsRocmSupport.TryGetCanonicalArchitecture("gfx906");
+        var canonicalArch = RocmSupport.TryGetCanonicalArchitecture("gfx906");
 
         Assert.AreEqual("gfx906", canonicalArch);
     }
@@ -99,18 +99,18 @@ public class RocmPackageHelperTests
     }
 
     [TestMethod]
-    public void WindowsRocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForKrakenPoint()
+    public void RocmSupport_TryGetMultiArchDeviceExtra_ReturnsExpectedExtra_ForKrakenPoint()
     {
-        var deviceExtra = WindowsRocmSupport.TryGetMultiArchDeviceExtra("gfx1152");
+        var deviceExtra = RocmSupport.TryGetMultiArchDeviceExtra("gfx1152");
 
         Assert.AreEqual("device-gfx1152", deviceExtra);
     }
 
     [TestMethod]
-    public void WindowsRocmSupport_IsSupportedGpu_ReturnsTrue_ForSupportedAmdGpu()
+    public void RocmSupport_IsSupportedGpu_ReturnsTrue_ForSupportedAmdGpu()
     {
         var gpu = new GpuInfo { Name = "AMD Radeon RX 9070 XT", MemoryBytes = 16UL * Size.GiB };
 
-        Assert.IsTrue(WindowsRocmSupport.IsSupportedGpu(gpu));
+        Assert.IsTrue(RocmSupport.IsSupportedGpu(gpu));
     }
 }

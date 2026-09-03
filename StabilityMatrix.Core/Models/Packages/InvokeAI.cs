@@ -288,7 +288,7 @@ public class InvokeAI(
 
         if (isSupportedWindowsRocmInstall)
         {
-            var installProfile = InvokeAiWindowsRocmProfile.CreateInstallProfile(
+            var installProfile = InvokeAiRocmProfile.CreateInstallProfile(
                 options.PythonOptions.PythonVersion ?? RecommendedPythonVersion
             );
 
@@ -662,12 +662,12 @@ public class InvokeAI(
         env = GetEnvVars(env, installPath);
 
         var selectedTorchIndex = installedPackage.PreferredTorchIndex ?? GetRecommendedTorchVersion();
-        if (!rocmPackageHelper.ShouldApplyWindowsLaunchEnvironment(selectedTorchIndex))
+        if (!rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(selectedTorchIndex))
         {
             return env;
         }
 
-        return env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(InvokeAiWindowsRocmProfile.Default));
+        return env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(InvokeAiRocmProfile.Default));
     }
 
     private IReadOnlyList<string> GetLaunchNoticeLines(InstalledPackage installedPackage)
