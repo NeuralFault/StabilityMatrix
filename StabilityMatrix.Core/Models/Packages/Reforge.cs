@@ -74,11 +74,31 @@ public class Reforge(
                 }
             );
 
+            // Warn Linux AMD users that disabling --skip-install lets reForge reinstall its own
+            // pinned PyTorch at launch, which would overwrite the helper-managed ROCm install.
+            if (
+                Compat.IsLinux
+                && (SettingsManager.Settings.PreferredGpu?.IsAmd ?? HardwareHelper.PreferRocm())
+            )
+            {
+                var skipInstallIndex = baseLaunchOptions.FindIndex(x => x.Name == "Skip Install");
+                if (skipInstallIndex >= 0)
+                {
+                    baseLaunchOptions[skipInstallIndex] = baseLaunchOptions[skipInstallIndex] with
+                    {
+                        Description =
+                            "Disabling this lets reForge reinstall its own PyTorch at launch, "
+                            + "which will break the ROCm install. Keep enabled on Linux AMD.",
+                    };
+                }
+            }
+
             return baseLaunchOptions;
         }
     }
 
-    // Prefer ROCm on Linux AMD systems and use the helper-managed ROCm install/launch flow when supported.
+    // Prefer ROCm on AMD systems; installs use the helper-managed flow, falling back to the
+    // upstream PyTorch path for unsupported GPUs.
     public override TorchIndex GetRecommendedTorchVersion()
     {
         var preferRocm =
@@ -158,7 +178,7 @@ public class Reforge(
     protected override string TorchVersionSpec => "==2.9.0";
 
     // The rocm7.2 index has no torch 2.9.x, so with the ==2.9.0 pin pip would fall back to the
-    // CUDA wheel from PyPI on Linux AMD installs (#1669). rocm6.4 hosts 2.9.0+rocm6.4.
+    // CPU-only wheel from PyPI on Linux AMD installs (#1669). rocm6.4 hosts 2.9.0+rocm6.4.
     protected override string RocmIndexName => "rocm6.4";
 
     protected override ImmutableDictionary<string, string> GetEnvVars(
