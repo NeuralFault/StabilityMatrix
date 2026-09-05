@@ -19,6 +19,20 @@ public static class RocmSupport
         "gfx1153",
     ];
 
+    /// <summary>
+    /// System-level ROCm/HIP SDK environment variables that conflict with the self-contained pip
+    /// ROCm SDK. These are scrubbed from helper-managed process environments (package launch, SDK
+    /// init, and source builds) so the venv toolchain never inherits a stale system ROCm/HIP SDK.
+    /// </summary>
+    public static readonly string[] ConflictingRocmEnvironmentVariables =
+    [
+        "ROCM_PATH",
+        "ROCM_HOME",
+        "HIP_PATH",
+        "ROCM_DIR",
+        "HIP_DIR",
+    ];
+
     public static bool IsSupportedGpu(GpuInfo? gpu)
     {
         if (gpu is null || !gpu.IsAmd || string.IsNullOrWhiteSpace(gpu.Name))
@@ -75,7 +89,15 @@ public static class RocmSupport
 
         return normalizedArch switch
         {
-            "gfx900" or "gfx906" or "gfx908" or "gfx90a" or "gfx950" or "gfx1150" or "gfx1151" or "gfx1152" or "gfx1153" => normalizedArch,
+            "gfx900"
+            or "gfx906"
+            or "gfx908"
+            or "gfx90a"
+            or "gfx950"
+            or "gfx1150"
+            or "gfx1151"
+            or "gfx1152"
+            or "gfx1153" => normalizedArch,
             var s
                 when s.StartsWith("gfx101", StringComparison.Ordinal)
                     || s.StartsWith("gfx103", StringComparison.Ordinal)

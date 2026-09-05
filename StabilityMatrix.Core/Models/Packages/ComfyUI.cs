@@ -431,14 +431,6 @@ public class ComfyUI(
             commands.Add(
                 new ExtraPackageCommand
                 {
-                    CommandName = "Install ROCm Development SDK",
-                    Command = InstallRocmDevelopmentSdk,
-                }
-            );
-
-            commands.Add(
-                new ExtraPackageCommand
-                {
                     CommandName = "Install bitsandbytes (ROCm)",
                     Command = InstallRocmBitsAndBytes,
                     IsVisible = installedPackage =>
@@ -448,6 +440,17 @@ public class ComfyUI(
 
                         return pyVersion.Major == 3 && pyVersion.Minor == 12;
                     },
+                }
+            );
+        }
+
+        if (HasRocmSupport())
+        {
+            commands.Add(
+                new ExtraPackageCommand
+                {
+                    CommandName = "Install ROCm Development SDK",
+                    Command = InstallRocmDevelopmentSdk,
                 }
             );
         }

@@ -59,10 +59,10 @@ public class InstallRocmPackageCommandStep(
 
     public async Task ExecuteAsync(IProgress<ProgressReport>? progress = null)
     {
-        if (!OperatingSystem.IsWindows())
+        if (!OperatingSystem.IsWindows() && CommandType != RocmPackageCommandType.DevelopmentSdk)
         {
             throw new PlatformNotSupportedException(
-                "ROCm package commands are only supported on Windows."
+                "This ROCm package command is only supported on Windows."
             );
         }
 
@@ -110,9 +110,7 @@ public class InstallRocmPackageCommandStep(
                 await ExecuteFlashAttentionAsync(venvRunner, progress).ConfigureAwait(false);
                 break;
             default:
-                throw new InvalidOperationException(
-                    $"Unsupported ROCm package command type: {CommandType}."
-                );
+                throw new InvalidOperationException($"Unsupported ROCm package command type: {CommandType}.");
         }
     }
 
@@ -122,8 +120,7 @@ public class InstallRocmPackageCommandStep(
         if (!compatibility.IsCompatible)
         {
             throw new InvalidOperationException(
-                compatibility.FailureReason
-                    ?? "ROCm package commands require a supported ROCm machine state."
+                compatibility.FailureReason ?? "ROCm package commands require a supported ROCm machine state."
             );
         }
     }

@@ -212,6 +212,61 @@ public class RocmPackageHelper : IRocmPackageHelper
                 onConsoleOutput
             )
             .ConfigureAwait(false);
+
+        progress?.Report(new ProgressReport(-1f, "Initializing ROCm SDK...", isIndeterminate: true));
+        await TryInitializeRocmSdkAsync(venvRunner, onConsoleOutput).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs <c>rocm-sdk init</c> in the package venv to eagerly expand the installed devel tree.
+    /// Failures are logged and surfaced as a warning instead of thrown, since the SDK lazily
+    /// initializes on first use of a devel tool.
+    /// </summary>
+    private static async Task TryInitializeRocmSdkAsync(
+        IPyVenvRunner venvRunner,
+        Action<ProcessOutput>? onConsoleOutput
+    )
+    {
+        var rocmSdkScriptPath = venvRunner.RootPath.JoinFile(
+            Compat.IsWindows ? Path.Combine("Scripts", "rocm-sdk.exe") : Path.Combine("bin", "rocm-sdk")
+        );
+
+        if (!rocmSdkScriptPath.Exists)
+        {
+            Logger.Warn(
+                $"ROCm SDK CLI was not found at '{rocmSdkScriptPath.FullPath}'; skipping rocm-sdk init."
+            );
+            return;
+        }
+
+        var environment = venvRunner.EnvironmentVariables;
+        foreach (var key in RocmSupport.ConflictingRocmEnvironmentVariables)
+        {
+            environment = environment.SetItem(key, ProcessRunner.UnsetEnvironmentVariable);
+        }
+
+        var result = await ProcessRunner
+            .GetProcessResultAsync(
+                rocmSdkScriptPath.FullPath,
+                "init",
+                venvRunner.RootPath.FullPath,
+                environment
+            )
+            .ConfigureAwait(false);
+
+        if (result.ExitCode == 0)
+        {
+            Logger.Info("rocm-sdk init completed successfully.");
+            return;
+        }
+
+        var message =
+            $"`rocm-sdk init` failed with exit code {result.ExitCode}. "
+            + "The ROCm SDK may still initialize on first use, but you can retry manually by activating "
+            + $"the package venv ({venvRunner.RootPath.FullPath}) and running `rocm-sdk init`.";
+
+        Logger.Warn($"{message} Output: {result.StandardError}");
+        onConsoleOutput?.Invoke(ProcessOutput.FromStdErrLine(message));
     }
 
     /// <summary>
@@ -625,6 +680,13 @@ public class RocmPackageHelper : IRocmPackageHelper
             {
                 merged[pair.Key] = pair.Value;
             }
+        }
+
+        // Neutralize inherited system ROCm/HIP SDK variables so the venv's self-contained SDK is
+        // used. User overrides below can still intentionally re-set these keys.
+        foreach (var key in RocmSupport.ConflictingRocmEnvironmentVariables)
+        {
+            merged[key] = ProcessRunner.UnsetEnvironmentVariable;
         }
 
         if (

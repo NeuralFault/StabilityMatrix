@@ -10,6 +10,10 @@ public static class ProcessRunner
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+    // Sentinel value that, when supplied as an environment variable value, causes the inherited
+    // environment variable of that name to be removed from the child process instead of set.
+    public const string UnsetEnvironmentVariable = "\u0000SM_UNSET\u0000";
+
     // Managed Python/uv subprocesses should not inherit ambient Python/venv activation state.
     private static readonly string[] PythonEnvironmentVariablesToSanitize =
     [
@@ -115,7 +119,15 @@ public static class ProcessRunner
         var keys = new List<string>();
         foreach (var (key, value) in environmentVariables)
         {
-            info.EnvironmentVariables[key] = value;
+            if (value == UnsetEnvironmentVariable)
+            {
+                info.Environment.Remove(key);
+            }
+            else
+            {
+                info.EnvironmentVariables[key] = value;
+            }
+
             keys.Add(key);
         }
 
@@ -651,9 +663,10 @@ public static class ProcessRunner
     /// </summary>
     public static string Quote(string argument)
     {
-        var inner = argument.Length >= 2 && argument.StartsWith('"') && argument.EndsWith('"')
-            ? argument[1..^1]
-            : argument;
+        var inner =
+            argument.Length >= 2 && argument.StartsWith('"') && argument.EndsWith('"')
+                ? argument[1..^1]
+                : argument;
 
         if (!inner.Contains(' ') && !inner.Contains('"'))
             return argument;
