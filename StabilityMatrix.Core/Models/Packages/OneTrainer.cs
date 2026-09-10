@@ -85,8 +85,11 @@ public class OneTrainer(
 
         var torchVersion = options.PythonOptions.TorchIndex ?? GetRecommendedTorchVersion();
 
-        // ROCm path
-        var isRocm = torchVersion == TorchIndex.Rocm && rocmPackageHelper.GetCompatibility().IsCompatible;
+        // ROCm helper path (Windows only; Linux uses the upstream requirements-rocm.txt path)
+        var isRocm =
+            torchVersion == TorchIndex.Rocm
+            && Compat.IsWindows
+            && rocmPackageHelper.GetCompatibility().IsCompatible;
 
         if (isRocm)
         {
@@ -169,8 +172,10 @@ public class OneTrainer(
 
         if (rocmPackageHelper.ShouldApplyRocmLaunchEnvironment(selectedTorchIndex))
         {
+            var profile = Compat.IsWindows ? OneTrainerRocmProfile.Default : OneTrainerRocmProfile.Linux;
+
             VenvRunner.UpdateEnvironmentVariables(env =>
-                env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(OneTrainerRocmProfile.Default))
+                env.SetItems(rocmPackageHelper.BuildLaunchEnvironment(profile))
             );
         }
 

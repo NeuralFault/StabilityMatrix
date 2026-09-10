@@ -13,7 +13,7 @@ public class Wan2GpRocmProfile : RocmPackageProfile
         {
             RequirementsFilePaths = ["requirements.txt"],
             UpgradePackages = true,
-            PostTorchInstallPipArgs = ["hf-xet", "setuptools<70.0.0", "numpy==1.26.4"],
+            PostTorchInstallPipArgs = ["hf-xet", "setuptools<70.0.0"],
         };
     }
 

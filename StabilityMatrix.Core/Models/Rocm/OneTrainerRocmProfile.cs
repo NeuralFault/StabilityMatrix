@@ -12,6 +12,16 @@ public class OneTrainerRocmProfile : RocmPackageProfile
 {
     public static RocmPackageProfile Default { get; } = new OneTrainerRocmProfile();
 
+    /// <summary>
+    /// Profile for plain (non-helper) Linux ROCm installs. Keeps helper tuning defaults
+    /// but skips SDK environment sanitization since there is no helper-managed ROCm SDK.
+    /// </summary>
+    public static RocmPackageProfile Linux { get; } =
+        new OneTrainerRocmProfile
+        {
+            EnvironmentOptions = new RocmEnvironmentOptions { SanitizeRocmSdkEnvironment = false },
+        };
+
     // Restores flop counter functionality requiring triton module
     private const string TritonWindowsPackage = "triton-windows";
 

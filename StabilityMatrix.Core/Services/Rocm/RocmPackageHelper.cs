@@ -327,7 +327,17 @@ public class RocmPackageHelper : IRocmPackageHelper
 
         if (installConfig.ForceReinstallTorch)
         {
-            torchArgs = torchArgs.AddArg("--force-reinstall");
+            // Reinstall only the torch trio from the multi-arch index. A blanket
+            // --force-reinstall would also re-resolve transitive deps like numpy
+            // against the multi-arch index, where the only numpy build may not
+            // support the venv's Python version.
+            torchArgs = torchArgs
+                .AddArg("--reinstall-package")
+                .AddArg("torch")
+                .AddArg("--reinstall-package")
+                .AddArg("torchvision")
+                .AddArg("--reinstall-package")
+                .AddArg("torchaudio");
         }
 
         if (installedPackage.PipOverrides != null)
@@ -684,9 +694,12 @@ public class RocmPackageHelper : IRocmPackageHelper
 
         // Neutralize inherited system ROCm/HIP SDK variables so the venv's self-contained SDK is
         // used. User overrides below can still intentionally re-set these keys.
-        foreach (var key in RocmSupport.ConflictingRocmEnvironmentVariables)
+        if (options.SanitizeRocmSdkEnvironment)
         {
-            merged[key] = ProcessRunner.UnsetEnvironmentVariable;
+            foreach (var key in RocmSupport.ConflictingRocmEnvironmentVariables)
+            {
+                merged[key] = ProcessRunner.UnsetEnvironmentVariable;
+            }
         }
 
         if (
