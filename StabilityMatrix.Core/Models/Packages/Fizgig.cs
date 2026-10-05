@@ -168,8 +168,6 @@ public class Fizgig(
                 cancellationToken
             )
             .ConfigureAwait(false);
-
-        venvRunner.UpdateEnvironmentVariables(env => env.Remove("DISABLE_CUDA"));
     }
 
     public override async Task RunPackage(
