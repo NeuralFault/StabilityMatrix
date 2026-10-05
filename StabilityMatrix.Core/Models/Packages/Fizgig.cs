@@ -32,7 +32,7 @@ public class Fizgig(
     public override string Author => "shootthesound";
 
     public override string Blurb =>
-        "LoRA training studio for Flux 2 Klein 9B, Krea 2, MiniMax H3 and Qwen Image 2.1 — train, profile, repair and extract";
+        "LoRA training studio for Flux 2 Klein 9B, Krea 2, MiniMax H3 and Qwen Image 2.1. Train, profile, repair and extract";
 
     // Shown in the install browser before the user commits to installing.
     public override string Disclaimer =>
