@@ -149,7 +149,6 @@ public class Fizgig(
                 $"torchvision{torchvisionVersion}",
                 "--extra-index-url",
                 "https://download.pytorch.org/whl/cu128",
-                "--force-reinstall",
             ],
             // Re-state the pins alongside the requirements: pip then treats the installed
             // 2.10.0+cu128 as satisfying them instead of resolving its own torch from PyPI, and
