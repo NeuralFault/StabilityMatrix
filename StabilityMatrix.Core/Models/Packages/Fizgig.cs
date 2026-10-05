@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Injectio.Attributes;
 using StabilityMatrix.Core.Helper;
 using StabilityMatrix.Core.Helper.Cache;
@@ -10,7 +11,7 @@ using StabilityMatrix.Core.Services;
 namespace StabilityMatrix.Core.Models.Packages;
 
 [RegisterSingleton<BasePackage, Fizgig>(Duplicate = DuplicateStrategy.Append)]
-public class Fizgig(
+public partial class Fizgig(
     IGithubApiCache githubApi,
     ISettingsManager settingsManager,
     IDownloadService downloadService,
@@ -108,33 +109,23 @@ public class Fizgig(
         // requirements.txt warns never to install that line without this.
         venvRunner.UpdateEnvironmentVariables(env => env.SetItem("DISABLE_CUDA", "1"));
 
-        const string torchVersion = "==2.10.0";
-        const string torchvisionVersion = "==0.25.0";
+        // Mirrors upstream's uv_install_deps.py: torch goes in first from the CUDA index, then
+        // the rest of requirements.txt without that index. The torch pins stay in the second
+        // step so nothing can swap the CUDA build for a PyPI one.
+        var (extraIndexUrl, torchSpecs) = await ParseRequirementsAsync(
+                Path.Combine(installLocation, "requirements.txt"),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
 
         var config = new PipInstallConfig
         {
             RequirementsFilePaths = ["requirements.txt"],
-            // Drop the torch pins and the cu128 index line from the file so the pre-install step
-            // below is the single source of truth for which build lands in the venv. The pattern
-            // is anchored against the whole entry by the caller, so the version specifier has to
-            // be matched too - the default pattern only catches bare, unpinned names.
-            RequirementsExcludePattern =
-                @"(--extra-index-url.*|(torch|torchvision|torchaudio|xformers)([=<>!~].*)?)",
-            // Install the cu128 build before the requirements. accelerate (and friends) depend on
-            // torch transitively, so installing it afterwards would let the requirements step
-            // pull a default PyPI build that then has to be force-reinstalled over.
-            // torch 2.10 pairs with cu128 here; SM's default cu130 has no matching wheels.
+            RequirementsExcludePattern = "--extra-index-url.*",
             PrePipInstallArgs =
-            [
-                $"torch{torchVersion}",
-                $"torchvision{torchvisionVersion}",
-                "--extra-index-url",
-                "https://download.pytorch.org/whl/cu128",
-            ],
-            // Re-state the pins alongside the requirements: pip then treats the installed
-            // 2.10.0+cu128 as satisfying them instead of resolving its own torch from PyPI, and
-            // fails loudly rather than swapping it if anything conflicts.
-            ExtraPipArgs = [$"torch{torchVersion}", $"torchvision{torchvisionVersion}"],
+                extraIndexUrl is not null && torchSpecs.Count > 0
+                    ? [.. torchSpecs, "--extra-index-url", extraIndexUrl]
+                    : [],
             SkipTorchInstall = true,
         };
 
@@ -149,6 +140,57 @@ public class Fizgig(
             )
             .ConfigureAwait(false);
     }
+
+    private static readonly string[] TorchEcosystem = ["torch", "torchvision", "torchaudio"];
+
+    /// <summary>
+    /// Port of _parse_requirements in upstream's uv_install_deps.py: returns the single
+    /// --extra-index-url and the torch-ecosystem requirement lines.
+    /// </summary>
+    private static async Task<(string? ExtraIndexUrl, List<string> TorchSpecs)> ParseRequirementsAsync(
+        string requirementsPath,
+        CancellationToken cancellationToken
+    )
+    {
+        string? extraIndexUrl = null;
+        var torchSpecs = new List<string>();
+
+        var lines = await File.ReadAllLinesAsync(requirementsPath, cancellationToken).ConfigureAwait(false);
+        foreach (var raw in lines)
+        {
+            var code = raw.Split('#', 2)[0].Trim();
+            if (code.StartsWith("--extra-index-url", StringComparison.Ordinal))
+            {
+                if (extraIndexUrl is not null)
+                {
+                    throw new InvalidOperationException(
+                        "Fizgig's requirements.txt declares more than one --extra-index-url"
+                    );
+                }
+
+                var parts = code.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 2)
+                {
+                    extraIndexUrl = parts[1];
+                }
+                continue;
+            }
+
+            if (code.Length > 0)
+            {
+                var pkg = RequirementNameEndRegex().Split(code, 2)[0];
+                if (TorchEcosystem.Contains(pkg))
+                {
+                    torchSpecs.Add(code);
+                }
+            }
+        }
+
+        return (extraIndexUrl, torchSpecs);
+    }
+
+    [GeneratedRegex(@"[=<>!~\s\[;]")]
+    private static partial Regex RequirementNameEndRegex();
 
     public override async Task RunPackage(
         string installLocation,
