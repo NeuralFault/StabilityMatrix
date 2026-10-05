@@ -75,35 +75,16 @@ public class Fizgig(
     public override string OutputFolderName => string.Empty;
     public override Dictionary<SharedOutputType, IReadOnlyList<string>>? SharedOutputFolders => null;
 
-    /// <summary>
-    /// Defaults to None, matching the other trainers. Opting in to Symlink (Package Manager ->
-    /// ... -> Shared Model Strategy) junctions output_loras into the shared Lora folder, so a
-    /// freshly trained LoRA is immediately visible to ComfyUI and friends.
-    /// </summary>
+    /// <remarks>
+    /// None only, like the other trainers. output_loras also receives sample images and multi-GB
+    /// resume-state folders, so linking it into the shared Lora folder would leak those into other
+    /// packages. Users who want trained LoRAs there can point Fizgig's Output Directory at it.
+    /// models/ can't be shared either: Fizgig flattens every weight it downloads into that one
+    /// directory, which doesn't map onto the per-type shared folders.
+    /// </remarks>
     public override SharedFolderMethod RecommendedSharedFolderMethod => SharedFolderMethod.None;
 
-    public override IEnumerable<SharedFolderMethod> AvailableSharedFolderMethods =>
-        [SharedFolderMethod.None, SharedFolderMethod.Symlink];
-
-    /// <remarks>
-    /// Only output_loras is mapped. Fizgig's models/ directory deliberately flattens every
-    /// weight it downloads into one folder — DiTs, text encoders, VAEs, turbo LoRAs and training
-    /// adapters all land there as bare filenames (see src/fizgig/scripts/fetch_models.py) — and
-    /// junctions are directory-level, so there is no way to fan that single directory out to
-    /// DiffusionModels/TextEncoders/VAE without them colliding on the same target path.
-    /// </remarks>
-    public override SharedFolderLayout SharedFolderLayout =>
-        new()
-        {
-            Rules =
-            [
-                new SharedFolderLayoutRule
-                {
-                    SourceTypes = [SharedFolderType.Lora],
-                    TargetRelativePaths = ["output_loras"],
-                },
-            ],
-        };
+    public override IEnumerable<SharedFolderMethod> AvailableSharedFolderMethods => [SharedFolderMethod.None];
 
     public override async Task InstallPackage(
         string installLocation,
