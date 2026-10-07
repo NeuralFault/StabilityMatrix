@@ -16,6 +16,13 @@ public class RocmPackageProfile
     public PipInstallConfig InstallConfig { get; init; } = new();
 
     /// <summary>
+    /// When true, the ROCm helper passes <c>--pre</c> when installing torch so pre-release multi-arch
+    /// builds can be selected. Intended as a temporary workaround for packages that need to avoid a
+    /// broken stable ROCm release.
+    /// </summary>
+    public bool IncludePrereleaseTorch { get; init; }
+
+    /// <summary>
     /// Optional callback for package-specific environment variables derived from a resolved ROCm context.
     /// </summary>
     public Func<
