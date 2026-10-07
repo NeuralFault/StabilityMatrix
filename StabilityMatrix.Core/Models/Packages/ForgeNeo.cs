@@ -2,8 +2,10 @@
 using StabilityMatrix.Core.Helper;
 using StabilityMatrix.Core.Helper.Cache;
 using StabilityMatrix.Core.Models;
+using StabilityMatrix.Core.Models.Rocm;
 using StabilityMatrix.Core.Python;
 using StabilityMatrix.Core.Services;
+using StabilityMatrix.Core.Services.Rocm;
 
 namespace StabilityMatrix.Core.Models.Packages;
 
@@ -14,7 +16,8 @@ public class ForgeNeo(
     IDownloadService downloadService,
     IPrerequisiteHelper prerequisiteHelper,
     IPyInstallationManager pyInstallationManager,
-    IPipWheelService pipWheelService
+    IPipWheelService pipWheelService,
+    IRocmPackageHelper rocmPackageHelper
 )
     : ForgeClassic(
         githubApi,
@@ -25,6 +28,20 @@ public class ForgeNeo(
         pipWheelService
     )
 {
+    /// <summary>
+    /// Uses the shared ROCm helper for Windows ROCm eligibility checks so Forge Neo does not maintain
+    /// its own support matrix.
+    /// </summary>
+    private bool HasWindowsRocmSupport()
+    {
+        return HasWindowsRocmSupport(rocmPackageHelper);
+    }
+
+    private RocmCompatibilityResult GetWindowsRocmCompatibility()
+    {
+        return GetWindowsRocmCompatibility(rocmPackageHelper);
+    }
+
     public override string Name => "forge-neo";
     public override string DisplayName { get; set; } = "Stable Diffusion WebUI Forge - Neo";
     public override string MainBranch => "neo";
