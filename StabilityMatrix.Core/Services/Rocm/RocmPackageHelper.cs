@@ -273,11 +273,11 @@ public class RocmPackageHelper : IRocmPackageHelper
         progress?.Report(new ProgressReport(-1f, "Installing ROCm torch...", isIndeterminate: true));
 
         var torchArgs = ApplyRocmTorchInstallOptions(
-            new PipInstallArgs()
-                .AddKeyedArgs("--index-url", ["--index-url", multiArchPythonPackageIndexUrl])
-                .AddArg(new Argument(torchResolution.TorchSpecifier))
-                .AddArg(new Argument(torchResolution.TorchvisionSpecifier))
-                .AddArg("torchaudio"),
+            BuildRocmTorchArgs(
+                multiArchPythonPackageIndexUrl,
+                torchResolution.TorchSpecifier,
+                torchResolution.TorchvisionSpecifier
+            ),
             installConfig,
             installedPackage
         );
@@ -332,6 +332,23 @@ public class RocmPackageHelper : IRocmPackageHelper
         }
 
         return args;
+    }
+
+    /// <summary>
+    /// Builds the pip args for the resolved torch/torchvision pair. The specs are keyed so a user
+    /// override replaces the pin instead of being appended next to it (which pip cannot satisfy).
+    /// </summary>
+    internal static PipInstallArgs BuildRocmTorchArgs(
+        string multiArchPythonPackageIndexUrl,
+        string torchSpecifier,
+        string torchvisionSpecifier
+    )
+    {
+        return new PipInstallArgs()
+            .AddKeyedArgs("--index-url", ["--index-url", multiArchPythonPackageIndexUrl])
+            .AddArg(new Argument(key: "torch", value: torchSpecifier))
+            .AddArg(new Argument(key: "torchvision", value: torchvisionSpecifier))
+            .AddArg("torchaudio");
     }
 
     /// <summary>
@@ -459,10 +476,11 @@ public class RocmPackageHelper : IRocmPackageHelper
             )
         );
 
+        // Only widen to pre-releases on nightly, where pip would otherwise select an older final.
         return new TorchInstallResolution(
             torchSpecifierBase,
             torchvisionSpecifierBase,
-            AllowPrerelease: true
+            AllowPrerelease: usesNightlyIndex
         );
     }
 
