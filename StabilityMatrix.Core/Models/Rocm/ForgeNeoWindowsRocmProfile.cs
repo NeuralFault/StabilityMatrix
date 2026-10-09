@@ -5,7 +5,7 @@ using StabilityMatrix.Core.Services.Rocm;
 namespace StabilityMatrix.Core.Models.Rocm;
 
 /// <summary>
-/// Shared Windows ROCm profile for Forge Neo.
+/// Windows ROCm profile for Forge Neo.
 /// Forge Neo has no native AMD support, so the helper owns the ROCm torch install and the launch
 /// environment, while Forge Neo's own launch.py still installs the rest of its dependencies.
 /// </summary>
@@ -28,10 +28,6 @@ public class ForgeNeoWindowsRocmProfile : RocmPackageProfile
             UpgradePackages = true,
         };
 
-        // TEMPORARY: a stable ROCm release is currently broken while AMD prepares a fix (and a defensive
-        // Stability Matrix change is pending). Force pre-release resolution so installs succeed.
-        IncludePrereleaseTorch = true;
-
         ExtraEnvironmentFactory = BuildEnvironment;
     }
 
@@ -50,7 +46,7 @@ public class ForgeNeoWindowsRocmProfile : RocmPackageProfile
         // Persisted so that if Forge Neo re-runs its own torch install step it targets AMD's index
         // instead of pulling the NVIDIA CUDA build from PyTorch.
         var torchCommand =
-            $"pip install --pre --index-url {indexUrl} "
+            $"pip install --index-url {indexUrl} "
             + $"\"torch[{deviceExtra}]\" \"torchvision[{deviceExtra}]\" torchaudio \"rocm[devel]\"";
 
         return new Dictionary<string, string>

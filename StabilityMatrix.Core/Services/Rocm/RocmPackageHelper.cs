@@ -273,13 +273,6 @@ public class RocmPackageHelper : IRocmPackageHelper
             torchArgs = torchArgs.AddArg("--force-reinstall");
         }
 
-        // Temporary escape hatch for profiles that must resolve pre-release builds (e.g. while a stable
-        // AMD ROCm release is broken).
-        if (profile.IncludePrereleaseTorch)
-        {
-            torchArgs = torchArgs.AddArg("--pre");
-        }
-
         if (installedPackage.PipOverrides != null)
         {
             torchArgs = torchArgs.WithUserOverrides(installedPackage.PipOverrides);

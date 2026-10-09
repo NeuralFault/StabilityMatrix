@@ -219,7 +219,7 @@ public class ForgeClassic(
             )
             .ConfigureAwait(false);
 
-        // Allow derived packages (e.g. Forge Neo on Windows ROCm) to prepare the environment before the
+        // Allow derived packages (e.g. Forge Neo on ROCm) to prepare the environment before the
         // upstream launch.py install runs, such as pre-installing an alternative torch build.
         await PrepareRocmInstallAsync(
                 venvRunner,
@@ -307,8 +307,8 @@ public class ForgeClassic(
 
     /// <summary>
     /// Hook for derived packages to prepare the environment before the upstream Forge install script
-    /// runs. The default implementation does nothing. Used by Forge Neo to pre-install a Windows ROCm
-    /// torch build so the upstream launch.py does not install the NVIDIA CUDA build.
+    /// runs. The default implementation does nothing. Used by Forge Neo to pre-install an alternative
+    /// ROCm torch build so the upstream launch.py does not install its default (CUDA) torch build.
     /// </summary>
     protected virtual Task PrepareRocmInstallAsync(
         IPyVenvRunner venvRunner,
