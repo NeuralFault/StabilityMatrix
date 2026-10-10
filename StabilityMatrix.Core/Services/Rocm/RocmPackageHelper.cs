@@ -266,7 +266,8 @@ public class RocmPackageHelper : IRocmPackageHelper
                 multiArchPythonPackageIndexUrl,
                 multiArchDeviceExtra,
                 usesNightlyIndex,
-                onConsoleOutput
+                onConsoleOutput,
+                cancellationToken
             )
             .ConfigureAwait(false);
 
@@ -370,7 +371,8 @@ public class RocmPackageHelper : IRocmPackageHelper
         string multiArchPythonPackageIndexUrl,
         string multiArchDeviceExtra,
         bool usesNightlyIndex,
-        Action<ProcessOutput>? onConsoleOutput
+        Action<ProcessOutput>? onConsoleOutput,
+        CancellationToken cancellationToken
     )
     {
         var torchSpecifierBase = $"torch[{multiArchDeviceExtra}]";
@@ -382,10 +384,13 @@ public class RocmPackageHelper : IRocmPackageHelper
             var torchIndex = await venvRunner
                 .PipIndex("torch", multiArchPythonPackageIndexUrl, includePrerelease: usesNightlyIndex)
                 .ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+
             // torchvision: allow pre-releases so the matched alpha (e.g. 0.29.0a0) is visible.
             var torchvisionIndex = await venvRunner
                 .PipIndex("torchvision", multiArchPythonPackageIndexUrl, includePrerelease: true)
                 .ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
 
             // On the nightly channel the local label carries the build date, so pin the newest snapshot
             // that exists for both torch and the paired torchvision instead of letting pip pair builds
@@ -461,7 +466,7 @@ public class RocmPackageHelper : IRocmPackageHelper
                 );
             }
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.Warn(
                 exception,
